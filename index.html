@@ -1,0 +1,2467 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BF Manager">
+<meta name="theme-color" content="#0f0f0f">
+<link rel="manifest" href="manifest.json">
+<title>Barbara Friehs — Website Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0f0f0f;
+  --surface:  #181818;
+  --surface2: #222222;
+  --border:   rgba(255,255,255,.07);
+  --border2:  rgba(255,255,255,.12);
+  --text:     #f0ede8;
+  --muted:    #888;
+  --accent:   #c8a882;
+  --accent2:  #e8c9a0;
+  --green:    #4caf7d;
+  --red:      #e05c5c;
+  --blue:     #5b9bd5;
+  --sans:     'DM Sans', sans-serif;
+  --serif:    'DM Serif Display', serif;
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+/* ===== MOBILE / PWA ===== */
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100% !important;
+    height: auto !important;
+    flex-shrink: 0;
+    flex-direction: row;
+    padding: .5rem .75rem;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border);
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    top: auto !important;
+    z-index: 100;
+    overflow: visible;
+  }
+  .sidebar-logo { display: none; }
+  .sidebar-nav-section { display: none; }
+  .nav-section-label { display: none; }
+  .sidebar-footer { display: none; }
+  .sidebar .nav-items-main {
+    display: flex;
+    flex-direction: row;
+    gap: .25rem;
+    width: 100%;
+    justify-content: space-around;
+  }
+  .nav-item {
+    flex-direction: column;
+    padding: .4rem .6rem !important;
+    font-size: .6rem !important;
+    gap: .2rem;
+    border-radius: 8px;
+    flex: 1;
+    text-align: center;
+    align-items: center;
+  }
+  .nav-icon { font-size: 1.2rem !important; }
+  .nav-badge { position: absolute; top: 2px; right: 2px; }
+  .main-content {
+    margin-left: 0 !important;
+    padding-bottom: 70px !important;
+    height: 100dvh !important;
+    overflow-y: auto;
+  }
+  .content-header {
+    padding: .75rem 1rem !important;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .gallery-toolbar {
+    flex-wrap: wrap;
+    gap: .4rem;
+    padding: .5rem !important;
+  }
+  .gallery-grid.sort-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .header-actions { gap: .4rem; }
+  .btn { font-size: .75rem !important; padding: .4rem .7rem !important; }
+  .publish-btn { font-size: .75rem !important; }
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== TITLE BAR ===== */
+.titlebar {
+  height: 44px;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.2rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  -webkit-app-region: no-drag;
+}
+.tb-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.tb-dot.red   { background: #ff5f57; }
+.tb-dot.yellow{ background: #ffbd2e; }
+.tb-dot.green { background: #28c840; }
+.titlebar-center {
+  font-family: var(--serif);
+  font-size: .85rem;
+  color: var(--muted);
+  letter-spacing: .06em;
+}
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  -webkit-app-region: no-drag;
+}
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+.status-text {
+  font-size: .72rem;
+  color: var(--muted);
+  letter-spacing: .04em;
+}
+
+/* ===== LAYOUT ===== */
+.app {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 220px;
+  background: #0d0d0d;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 1.5rem 1.2rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo-name {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: var(--accent2);
+  font-style: italic;
+}
+.sidebar-logo-sub {
+  font-size: .68rem;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-top: .2rem;
+}
+.nav-section {
+  padding: 1rem .8rem .4rem;
+}
+.nav-label {
+  font-size: .62rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 .4rem;
+  margin-bottom: .4rem;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .6rem .8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all .2s;
+  font-size: .85rem;
+  font-weight: 400;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--surface); color: var(--text); }
+.nav-item.active { background: var(--surface2); color: var(--text); }
+.nav-item.active .nav-icon { color: var(--accent); }
+.nav-icon { font-size: 1rem; width: 18px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--accent);
+  color: #000;
+  font-size: .6rem;
+  font-weight: 700;
+  padding: .1rem .4rem;
+  border-radius: 99px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem .8rem;
+  border-top: 1px solid var(--border);
+}
+.publish-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #1a1008;
+  border: none;
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  font-family: var(--sans);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  transition: background .2s, transform .1s;
+  letter-spacing: .02em;
+}
+.publish-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+.publish-btn:active { transform: translateY(0); }
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== TOP BAR ===== */
+.topbar {
+  height: 52px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  flex-shrink: 0;
+}
+.topbar-title {
+  font-size: 1rem;
+  font-weight: 500;
+}
+.topbar-actions {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .45rem 1rem;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: .78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn:hover { background: var(--surface2); border-color: rgba(255,255,255,.2); }
+.btn-primary {
+  background: var(--accent);
+  color: #1a1008;
+  border-color: transparent;
+}
+.btn-primary:hover { background: var(--accent2); }
+
+/* ===== CONTENT AREA ===== */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+.content::-webkit-scrollbar { width: 4px; }
+.content::-webkit-scrollbar-track { background: transparent; }
+.content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ===== DASHBOARD ===== */
+.dashboard { display: none; }
+.dashboard.active { display: block; }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  transition: border-color .2s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-label {
+  font-size: .7rem;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: .6rem;
+}
+.stat-value {
+  font-family: var(--serif);
+  font-size: 2rem;
+  color: var(--accent2);
+  line-height: 1;
+  margin-bottom: .3rem;
+}
+.stat-sub {
+  font-size: .72rem;
+  color: var(--muted);
+}
+
+.section-title {
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Recent activity */
+.activity-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .9rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  transition: background .2s;
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-item:hover { background: var(--surface2); }
+.activity-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .9rem;
+  flex-shrink: 0;
+}
+.activity-icon.img { background: rgba(200,168,130,.15); }
+.activity-icon.text { background: rgba(91,155,213,.15); }
+.activity-icon.publish { background: rgba(76,175,125,.15); }
+.activity-text { flex: 1; }
+.activity-text strong { font-weight: 500; font-size: .85rem; }
+.activity-text span { font-size: .75rem; color: var(--muted); display: block; margin-top: .1rem; }
+.activity-time { font-size: .72rem; color: var(--muted); }
+
+/* Quick actions */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.quick-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.4rem;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+}
+.quick-card:hover {
+  border-color: var(--accent);
+  background: rgba(200,168,130,.05);
+  transform: translateY(-2px);
+}
+.quick-icon { font-size: 1.8rem; margin-bottom: .8rem; }
+.quick-label { font-size: .85rem; font-weight: 500; margin-bottom: .3rem; }
+.quick-desc { font-size: .72rem; color: var(--muted); line-height: 1.5; }
+
+/* ===== GALERIE VIEW ===== */
+.galerie-view { display: none; }
+.galerie-view.active { display: block; }
+
+.gallery-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .5rem .9rem;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: .82rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--muted); }
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+/* ===== SORT GRID (gleichmäßig, zeilenweise) ===== */
+.gallery-grid.sort-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.gallery-grid.sort-grid .gallery-item {
+  cursor: grab;
+  position: relative;
+  break-inside: avoid;
+}
+.gallery-grid.sort-grid .gallery-item:active { cursor: grabbing; }
+.gallery-grid.sort-grid .sort-num {
+  position: absolute;
+  top: 6px; left: 6px;
+  background: rgba(0,0,0,.75);
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 10;
+  pointer-events: none;
+}
+.gallery-grid.sort-grid .gallery-item {
+  cursor: grab;
+  position: relative;
+}
+.gallery-grid.sort-grid .gallery-item:active { cursor: grabbing; }
+
+/* Positionsnummer Badge */
+.position-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0,0,0,.8);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  z-index: 10;
+  pointer-events: none;
+  min-width: 22px;
+  text-align: center;
+  letter-spacing: .02em;
+}
+
+/* Drag Highlight */
+.gallery-item.sortable-ghost { opacity: .25; }
+.gallery-item.sortable-chosen { box-shadow: 0 0 0 2px var(--accent); border-radius: 6px; }
+
+/* ===== MASONRY VORSCHAU ===== */
+.gallery-grid.masonry-preview {
+  display: block;
+  columns: 3;
+  column-gap: 1rem;
+}
+.gallery-grid.masonry-preview .gallery-item {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  cursor: default;
+}
+.gallery-grid.masonry-preview .gallery-thumb { height: auto; aspect-ratio: unset; background: transparent; display: block; }
+.gallery-grid.masonry-preview .gallery-thumb img { height: auto; width: 100%; object-fit: unset; display: block; }
+
+/* Drag & Drop Styling */
+.gallery-item.dragging {
+  opacity: .35;
+  transform: scale(.97);
+}
+.gallery-item.drag-over {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* View toggle button */
+.view-toggle {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.view-toggle-btn {
+  padding: .45rem .75rem;
+  font-size: .85rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--muted);
+  transition: all .15s;
+}
+.view-toggle-btn.active {
+  background: var(--surface2);
+  color: var(--accent);
+}
+.gallery-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+
+.gallery-item:hover .gallery-overlay { opacity: 1; }
+.overlay-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(20,20,20,.85);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .82rem; cursor: pointer;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+.overlay-btn:hover { background: rgba(60,60,60,.95); }
+
+/* ===== SOLD STEMPEL ===== */
+.sold-stamp {
+  position: absolute;
+  top: 8px; left: 8px;
+  transform: rotate(-18deg) scale(0);
+  width: 62px; height: 62px;
+  border: 2.5px solid #e05c5c;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #e05c5c;
+  font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: transform .3s cubic-bezier(.175,.885,.32,1.4), opacity .2s;
+  opacity: 0;
+  z-index: 6;
+  background: rgba(224,92,92,.08);
+}
+.sold-stamp::before {
+  content: '';
+  position: absolute; inset: 4px;
+  border: 1px solid rgba(224,92,92,.3);
+  border-radius: 50%;
+}
+.gallery-item.is-sold .sold-stamp {
+  transform: rotate(-18deg) scale(1);
+  opacity: 1;
+}
+.gallery-item.is-sold .gallery-thumb { filter: grayscale(30%) brightness(.85); }
+/* Sold-Badge unten links */
+.sold-badge { display: none !important; }
+
+.gallery-thumb {
+  width: 100%;
+  aspect-ratio: unset;
+  background: var(--surface2);
+  display: block;
+  overflow: hidden;
+}
+.gallery-thumb img { width: 100%; height: auto; display: block; object-fit: unset; }
+.gallery-info {
+  padding: .7rem .8rem;
+}
+.gallery-name {
+  font-size: .8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: .2rem;
+}
+.gallery-meta {
+  font-size: .68rem;
+  color: var(--muted);
+}
+.gallery-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.gallery-item.is-featured::after {
+  content: '★ Titelbild';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #0f0f0f;
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 3px 10px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+.upload-zone {
+  border: 2px dashed var(--border2);
+  border-radius: 10px;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--muted);
+  font-size: .78rem;
+}
+.upload-zone:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(200,168,130,.04);
+}
+.upload-zone .icon { font-size: 1.5rem; }
+
+/* ===== TEXTE VIEW ===== */
+.texte-view { display: none; }
+.texte-view.active { display: block; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.form-group.full { grid-column: 1 / -1; }
+.form-label {
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+.form-input, .form-textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .65rem .9rem;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: .88rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.6;
+}
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.4rem;
+  margin-bottom: 1.2rem;
+}
+.form-card-title {
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.save-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+/* ===== KONTAKT VIEW ===== */
+.kontakt-view { display: none; }
+.kontakt-view.active { display: block; }
+
+/* ===== PUBLISH VIEW ===== */
+.publish-view { display: none; }
+.publish-view.active { display: block; }
+
+.publish-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.2rem;
+  max-width: 640px;
+}
+.publish-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.publish-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: rgba(76,175,125,.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.publish-title { font-size: 1.1rem; font-weight: 500; }
+.publish-sub { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+
+.progress-bar {
+  background: var(--surface2);
+  border-radius: 99px;
+  height: 6px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 99px;
+  width: 0%;
+  transition: width .4s ease;
+}
+
+.deploy-log {
+  background: #0a0a0a;
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: 'Courier New', monospace;
+  font-size: .75rem;
+  color: #4caf7d;
+  max-height: 160px;
+  overflow-y: auto;
+  line-height: 1.7;
+}
+.deploy-log .muted { color: var(--muted); }
+.deploy-log .warn  { color: var(--accent); }
+
+.big-publish-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #1a1008;
+  border: none;
+  border-radius: 12px;
+  padding: 1.1rem;
+  font-family: var(--sans);
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  transition: all .2s;
+  letter-spacing: .02em;
+}
+.big-publish-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(200,168,130,.3); }
+
+/* ===== BESTÄTIGUNGS-DIALOG ===== */
+let _confirmCallback = null;
+
+function confirmDelete(name, callback) {
+  _confirmCallback = callback;
+  document.getElementById('confirmText').textContent = `"${name}" wird aus der Galerie entfernt.`;
+  const modal = document.getElementById('confirmModal');
+  modal.style.display = 'flex';
+}
+
+function closeConfirm(confirmed) {
+  document.getElementById('confirmModal').style.display = 'none';
+  if (confirmed && _confirmCallback) _confirmCallback();
+  _confirmCallback = null;
+}
+
+// ESC schließt den Dialog
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeConfirm(false);
+});
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: .7rem 1.4rem;
+  font-size: .82rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  transition: transform .3s ease;
+  z-index: 999;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success .toast-icon { color: var(--green); }
+.toast.error .toast-icon { color: var(--red); }
+
+/* ===== EDIT-MODAL ===== */
+.edit-modal-backdrop {
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.75);
+  z-index:9997;align-items:center;justify-content:center;
+}
+.edit-modal-backdrop.open { display:flex; }
+.edit-modal {
+  background:#181818;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;
+  width:420px;max-width:92vw;
+  padding:1.8rem;
+}
+.edit-modal-title {
+  font-size:1rem;font-weight:600;
+  margin-bottom:1.2rem;color:var(--accent2);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.edit-modal-close {
+  background:none;border:none;color:#888;
+  font-size:1.1rem;cursor:pointer;
+}
+
+/* ===== BILD-INFO MODAL ===== */
+.img-modal-backdrop {
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.75);
+  z-index:9998;align-items:center;justify-content:center;
+}
+.img-modal-backdrop.open { display:flex; }
+.img-modal {
+  background:#181818;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;
+  width:460px;max-width:92vw;
+  overflow:hidden;
+}
+.img-modal-preview {
+  width:100%;height:200px;
+  object-fit:cover;display:block;
+}
+.img-modal-body { padding:1.5rem; }
+.img-modal-title {
+  font-size:1rem;font-weight:600;
+  margin-bottom:1.2rem;color:var(--accent2);
+}
+.img-modal-grid {
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:.8rem;margin-bottom:.8rem;
+}
+.img-modal-group { display:flex;flex-direction:column;gap:.4rem; }
+.img-modal-group.full { grid-column:1/-1; }
+.img-modal-label {
+  font-size:.65rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);
+}
+.img-modal-input, .img-modal-select {
+  background:#0f0f0f;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;
+  padding:.6rem .8rem;
+  color:var(--text);
+  font-family:var(--sans);font-size:.85rem;
+  outline:none;
+  transition:border-color .2s;
+  width:100%;
+}
+.img-modal-input:focus,.img-modal-select:focus { border-color:var(--accent); }
+.img-modal-select option { background:#181818; }
+.img-modal-footer {
+  display:flex;gap:.6rem;justify-content:flex-end;
+  margin-top:1.2rem;
+}
+.img-modal-cancel {
+  background:none;border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:.55rem 1.1rem;
+  color:var(--muted);cursor:pointer;font-size:.82rem;
+  font-family:var(--sans);
+}
+.img-modal-confirm {
+  background:var(--accent);border:none;
+  border-radius:8px;padding:.55rem 1.3rem;
+  color:#1a1008;font-weight:700;cursor:pointer;
+  font-size:.82rem;font-family:var(--sans);
+  transition:background .2s;
+}
+.img-modal-confirm:hover { background:var(--accent2); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.content > * { animation: fadeIn .3s ease both; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+</head>
+<body>
+
+<!-- TITLE BAR -->
+<div class="titlebar">
+  <div class="titlebar-left">
+    <div class="tb-dot red"></div>
+    <div class="tb-dot yellow"></div>
+    <div class="tb-dot green"></div>
+  </div>
+  <div class="titlebar-center">Barbara Friehs — Website Manager</div>
+  <div class="titlebar-right">
+    <div class="status-dot" id="statusDot"></div>
+    <span class="status-text" id="statusText">Verbunden</span>
+    <button onclick="window.electronAPI ? window.electronAPI.closeWindow() : window.close()" style="background:none;border:none;color:#888;font-size:1rem;cursor:pointer;padding:.2rem .4rem;margin-left:.5rem;border-radius:4px;line-height:1;transition:background .2s,color .2s" onmouseover="this.style.background='#e05c5c';this.style.color='#fff'" onmouseout="this.style.background='none';this.style.color='#888'" title="Schließen">✕</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <!-- PASSWORT SCREEN -->
+  <div id="passwordScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem">
+    <div style="font-family:var(--serif);font-size:1.8rem;color:var(--text)">Barbara Friehs</div>
+    <div style="font-size:.8rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Website Manager</div>
+    <div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:.75rem">
+      <input type="password" id="passwordInput" placeholder="Passwort" 
+        style="width:100%;padding:.85rem 1rem;background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:1rem;outline:none"
+        onkeydown="if(event.key==='Enter')checkPassword()">
+      <div id="passwordError" style="color:var(--red);font-size:.78rem;text-align:center;display:none">Falsches Passwort</div>
+      <button onclick="checkPassword()" 
+        style="width:100%;padding:.85rem;background:var(--accent);color:#0f0f0f;border:none;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer">
+        Anmelden
+      </button>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-name">Barbara Friehs</div>
+      <div class="sidebar-logo-sub">barbarafriehs.at</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Navigation</div>
+      <div class="nav-item active" data-view="dashboard">
+        <span class="nav-icon">⚡</span> Dashboard
+      </div>
+      <div class="nav-item" data-view="galerie">
+        <span class="nav-icon">🖼️</span> Galerie
+        <span class="nav-badge">42</span>
+      </div>
+      <div class="nav-item" data-view="texte">
+        <span class="nav-icon">✏️</span> Texte
+      </div>
+      <div class="nav-item" data-view="kontakt">
+        <span class="nav-icon">📬</span> Kontakt
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Veröffentlichen</div>
+      <div class="nav-item" data-view="publish">
+        <span class="nav-icon">🚀</span> Publizieren
+      </div>
+      <div class="nav-item" data-view="dashboard">
+        <span class="nav-icon">👁️</span> Vorschau
+      </div>
+      <div class="nav-item" onclick="openSettings()" style="cursor:pointer">
+        <span class="nav-icon">⚙️</span> Einstellungen
+        <span id="tokenStatus" style="margin-left:auto;font-size:.65rem"></span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="publish-btn" onclick="switchView('publish')">
+        🚀 Jetzt publizieren
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn" onclick="showToast('Vorschau wird geöffnet...', 'success')">👁 Vorschau</button>
+        <button class="btn btn-primary" onclick="switchView('publish')">🚀 Publizieren</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="dashboard active" id="view-dashboard">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Werke</div>
+            <div class="stat-value" id="dash-werke">—</div>
+            <div class="stat-sub">in der Galerie</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Letztes Update</div>
+            <div class="stat-value" id="dash-update-val" style="font-size:1.1rem;padding-top:.4rem">—</div>
+            <div class="stat-sub" id="dash-update-sub">Noch nicht publiziert</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Domain</div>
+            <div class="stat-value" style="font-size:1rem;padding-top:.5rem;color:var(--green)">✓ Live</div>
+            <div class="stat-sub">barbarafriehs.at</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Verkauft</div>
+            <div class="stat-value" id="dash-sold">—</div>
+            <div class="stat-sub">Werke verkauft</div>
+          </div>
+        </div>
+
+        <div class="section-title">Schnellzugriff</div>
+        <div class="quick-grid" style="margin-bottom:1.5rem">
+          <div class="quick-card" onclick="switchView('galerie')">
+            <div class="quick-icon">🖼️</div>
+            <div class="quick-label">Bild hinzufügen</div>
+            <div class="quick-desc">Neues Werk in die Galerie hochladen</div>
+          </div>
+          <div class="quick-card" onclick="switchView('texte')">
+            <div class="quick-icon">✏️</div>
+            <div class="quick-label">Text bearbeiten</div>
+            <div class="quick-desc">Bio, Beschreibung oder Slogan ändern</div>
+          </div>
+          <div class="quick-card" onclick="switchView('kontakt')">
+            <div class="quick-icon">📬</div>
+            <div class="quick-label">Kontakt updaten</div>
+            <div class="quick-desc">Email, Instagram oder LinkedIn ändern</div>
+          </div>
+        </div>
+
+        <div class="section-title">Letzte Aktivitäten</div>
+        <div class="activity-list" id="activityList">
+          <div style="color:var(--muted);padding:.8rem 0;font-size:.82rem">Noch keine Aktivitäten</div>
+        </div>
+      </div>
+
+      <!-- GALERIE -->
+      <div class="galerie-view" id="view-galerie">
+        <div class="gallery-toolbar">
+          <input type="text" class="search-input" placeholder="🔍  Werk suchen...">
+          <button class="btn filter-btn active" data-filter="all">Alle</button>
+          <button class="btn filter-btn" data-filter="oil on canvas">Öl</button>
+          <button class="btn filter-btn" data-filter="acrylic on canvas">Acryl</button>
+          <select id="yearFilter" onchange="filterGallery()" style="cursor:pointer;padding:.45rem .7rem;background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:8px;font-size:.82rem;outline:none">
+            <option value="">Alle Jahre</option>
+          </select>
+          <div class="view-toggle">
+                      </div>
+          <button class="btn btn-primary" onclick="addNewImages()" style="gap:.5rem;display:flex;align-items:center">
+            <span style="font-size:1rem;line-height:1">＋</span>
+            <span>Bild hinzufügen</span>
+          </button>
+        </div>
+
+        <div class="gallery-grid sort-grid" id="galleryGrid">
+          <!-- Bilder werden per JS eingefügt -->
+        </div>
+      </div>
+
+      <!-- TEXTE -->
+      <div class="texte-view" id="view-texte">
+        <div class="form-card">
+          <div class="form-card-title">🎨 Allgemein</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-input" id="txt-name" value="Barbara Friehs">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Standort</label>
+              <input type="text" class="form-input" id="txt-standort" value="Graz, Austria">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Slogan Zeile 1</label>
+              <input type="text" class="form-input" id="txt-tagline1" value="Painting">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Slogan Zeile 2 (kursiv)</label>
+              <input type="text" class="form-input" id="txt-tagline2" value="with passion">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Kurzbeschreibung (Hero)</label>
+              <textarea class="form-textarea" id="txt-beschreibung">Barbara Friehs paints with an energy you can feel. Vibrant colours, expressive brushwork — art that speaks directly to the heart.</textarea>
+            </div>
+          </div>
+          <div class="save-row">
+            <button class="btn btn-primary" onclick="saveTexteLocal()">Speichern</button>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-card-title">👩 Über mich</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Titel</label>
+              <input type="text" class="form-input" id="txt-ueber-titel" value="Colour as inner force">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Text 1</label>
+              <textarea class="form-textarea" id="txt-ueber1">Barbara Gluyas-Friehs is an Austrian-Mexican painter based in Graz. Her paintings captivate with bold colours, vivid compositions and a love of patterns and surreal themes.</textarea>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Text 2</label>
+              <textarea class="form-textarea" id="txt-ueber2">After a Bachelor of Fine Arts at the Academy of Art in San Francisco and a Master's degree in Graz, she works in a shared studio with musicians, potters and media artists.</textarea>
+            </div>
+          </div>
+          <div class="save-row">
+            <button class="btn btn-primary" onclick="saveTexteLocal()">Speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KONTAKT -->
+      <div class="kontakt-view" id="view-kontakt">
+        <div class="form-card">
+          <div class="form-card-title">📬 Kontaktdaten</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">E-Mail</label>
+              <input type="email" class="form-input" id="txt-email" value="bfriehs@gmail.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Instagram Handle</label>
+              <input type="text" class="form-input" id="txt-instagram" value="painting_like_a_maniac">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">LinkedIn URL</label>
+              <input type="text" class="form-input" id="txt-linkedin" value="https://www.linkedin.com/in/barbara-friehs/?originalSubdomain=at">
+            </div>
+          </div>
+          <div class="save-row">
+            <button class="btn btn-primary" onclick="saveTexteLocal()">Speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PUBLISH -->
+      <div class="publish-view" id="view-publish">
+        <div class="publish-card">
+          <div class="publish-header">
+            <div class="publish-icon">🚀</div>
+            <div>
+              <div class="publish-title">Website publizieren</div>
+              <div class="publish-sub">Änderungen werden auf barbarafriehs.at veröffentlicht</div>
+            </div>
+          </div>
+
+          <div style="background:var(--surface2);border-radius:10px;padding:1rem;margin-bottom:1.2rem">
+            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.8rem">Ausstehende Änderungen</div>
+            <div id="pendingChangesList" style="display:flex;flex-direction:column;gap:.5rem;font-size:.82rem">
+              <div style="color:var(--muted)">Keine ausstehenden Änderungen</div>
+            </div>
+          </div>
+
+          <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+
+          <div class="deploy-log" id="deployLog">
+            <span class="muted">Bereit zum Publizieren...</span>
+          </div>
+
+          <div style="margin-top:1.2rem">
+            <button class="big-publish-btn" id="publishBtn" onclick="startPublish()">
+              🚀 Jetzt auf barbarafriehs.at veröffentlichen
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- BESTÄTIGUNGS-MODAL -->
+<div id="confirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:none;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:2rem;max-width:360px;width:90%;text-align:center">
+    <div style="font-size:2rem;margin-bottom:.8rem">🗑️</div>
+    <div style="font-weight:600;margin-bottom:.4rem;font-size:1rem" id="confirmTitle">Wirklich löschen?</div>
+    <div style="color:var(--muted);font-size:.82rem;margin-bottom:1.5rem" id="confirmText">Das Bild wird aus der Galerie entfernt.</div>
+    <div style="display:flex;gap:.8rem;justify-content:center">
+      <button onclick="closeConfirm(false)" style="padding:.6rem 1.4rem;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-size:.85rem">Abbrechen</button>
+      <button onclick="closeConfirm(true)" style="padding:.6rem 1.4rem;border-radius:8px;border:none;background:var(--red);color:#fff;cursor:pointer;font-size:.85rem;font-weight:600">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span id="toastText"></span>
+</div>
+
+<script>
+/* ===== PASSWORT ===== */
+const APP_PASSWORD = 'barbara2024';
+const AUTH_KEY = 'bf_auth';
+
+function checkPassword() {
+  const input = document.getElementById('passwordInput');
+  const val = input?.value || '';
+  if (val === APP_PASSWORD) {
+    localStorage.setItem(AUTH_KEY, '1');
+    document.getElementById('passwordScreen').style.display = 'none';
+    initApp();
+  } else {
+    document.getElementById('passwordError').style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
+}
+
+function initApp() {
+  buildGallery(KNOWN_BILDER);
+  setTimeout(() => initDragDrop(), 200);
+  setTimeout(() => loadGalleryFromGitHub(), 100);
+  loadTexteLocal();
+  updateTokenStatus();
+  updateDashboard();
+}
+
+// Beim Start prüfen
+(function() {
+  const screen = document.getElementById('passwordScreen');
+  if (localStorage.getItem(AUTH_KEY) === '1') {
+    screen.style.display = 'none';
+    // initApp wird unten normal aufgerufen
+  } else {
+    screen.style.display = 'flex';
+    // Verhindere dass die App lädt
+    document.querySelector('.app-layout') && (document.querySelector('.app-layout').style.display = 'none');
+    setTimeout(() => document.getElementById('passwordInput')?.focus(), 100);
+  }
+})();
+
+/* ===== NAVIGATION ===== */
+const titles = {
+  dashboard: 'Dashboard',
+  galerie:   'Galerie verwalten',
+  texte:     'Texte bearbeiten',
+  kontakt:   'Kontaktdaten',
+  publish:   'Publizieren',
+};
+
+function switchView(name) {
+  if (name === 'dashboard') updateDashboard();
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === name);
+  });
+  document.querySelectorAll('[id^="view-"]').forEach(el => {
+    el.classList.remove('active');
+  });
+  const view = document.getElementById('view-' + name);
+  if (view) view.classList.add('active');
+  document.getElementById('topbarTitle').textContent = titles[name] || name;
+  if (name === 'publish') updatePendingChanges();
+}
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => switchView(el.dataset.view));
+});
+
+/* ===== BILDER HINZUFÜGEN ===== */
+// Modal-Queue für mehrere Bilder
+let _modalQueue = [];
+let _modalResolve = null;
+
+function openImgModal(file) {
+  return new Promise((resolve) => {
+    _modalResolve = resolve;
+    document.getElementById('imgModalPreview').src = file.dataUrl;
+    // Dateiname als Vorschlag für Titel
+    const guess = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ').replace(/\b\w/g, l => l.toUpperCase());
+    document.getElementById('imgTitle').value = guess;
+    document.getElementById('imgJahr').value = new Date().getFullYear();
+    document.getElementById('imgBreite').value = '';
+    document.getElementById('imgHoehe').value = '';
+    document.getElementById('imgModal').style.display = 'flex';
+    document.getElementById('imgTitle').focus();
+  });
+}
+
+function confirmImgModal() {
+  const titel   = document.getElementById('imgTitle').value.trim() || 'Untitled';
+  const technik = document.getElementById('imgTechnik').value;
+  const jahr    = document.getElementById('imgJahr').value || new Date().getFullYear();
+  const breite  = document.getElementById('imgBreite').value;
+  const hoehe   = document.getElementById('imgHoehe').value;
+  const groesse = (breite && hoehe) ? `${breite}×${hoehe} cm` : '';
+  document.getElementById('imgModal').style.display = 'none';
+  if (_modalResolve) { _modalResolve({ titel, technik, jahr, groesse }); _modalResolve = null; }
+}
+
+function cancelImgModal() {
+  document.getElementById('imgModal').style.display = 'none';
+  if (_modalResolve) { _modalResolve(null); _modalResolve = null; }
+}
+
+// Enter-Taste bestätigt das Modal
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.getElementById('imgModal').classList.contains('open')) {
+    confirmImgModal();
+  }
+  if (e.key === 'Escape' && document.getElementById('imgModal').classList.contains('open')) {
+    cancelImgModal();
+  }
+});
+
+async function processModalQueue() {
+  if (_modalQueue.length === 0) return;
+  const { file, resolve } = _modalQueue.shift();
+  const info = await openImgModal(file);
+  resolve(info);
+}
+
+async function addNewImages() {
+  let files = [];
+  if (!window.electronAPI) {
+    files = await new Promise(res => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
+      input.onchange = (e) => {
+        const results = [];
+        let done = 0;
+        Array.from(e.target.files).forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            results.push({ name: file.name, dataUrl: ev.target.result, base64: ev.target.result.split(',')[1], mime: file.type });
+            if (++done === e.target.files.length) res(results);
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+      input.click();
+    });
+  } else {
+    files = await window.electronAPI.openFileDialog();
+  }
+  if (!files || files.length === 0) return;
+
+  // Jedes Bild einzeln durch Modal
+  for (const file of files) {
+    const info = await openImgModal(file);
+    if (info) addImageToGallery(file, info);
+  }
+}
+
+/* ===== GALERIE DATEN ===== */
+const OWNER = 'BarbaraFriehs';
+const REPO  = 'barbara-friehs-website';
+
+const KNOWN_BILDER = [
+  { name:'magick.jpg',                      titel:'Magick',                      technik:'oil on canvas',    jahr:'2024', groesse:'120×80 cm'  },
+  { name:'Fiddle leaf fig.jpg',             titel:'Fiddle Leaf Fig',             technik:'oil on canvas',    jahr:'2026', groesse:'40×40 cm'   },
+  { name:'liecken.jpg',                     titel:'Liecken',                     technik:'acrylic on canvas',jahr:'2021', groesse:'50×60 cm'   },
+  { name:'room in Milan.jpg',               titel:'Room in Milán',               technik:'acrylic on canvas',jahr:'2024', groesse:'40×50 cm'   },
+  { name:'pears and tea.jpg',               titel:'Pears and Tea',               technik:'acrylic on canvas',jahr:'2021', groesse:'40×50 cm'   },
+  { name:'books.jpg',                       titel:'Books',                       technik:'oil on canvas',    jahr:'2025', groesse:'40×40 cm'   },
+  { name:'Anna Theke by herself.jpg',       titel:'Anna Theke by Herself',       technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
+  { name:'beaten down the path.jpg',        titel:'Beaten Down the Path',        technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
+  { name:'bridge in greece.jpg',            titel:'Bridge in Greece',            technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
+  { name:'cactus love.jpg',                 titel:'Cactus Love',                 technik:'acrylic on canvas',jahr:'2025', groesse:'20×30 cm'   },
+  { name:'cat in a box.jpg',                titel:'Cat in a Box',                technik:'acrylic on canvas',jahr:'2020', groesse:'40×30 cm'   },
+  { name:'chickens.jpg',                    titel:'Chickens',                    technik:'acrylic on canvas',jahr:'2025', groesse:'30×40 cm'   },
+  { name:'christmas cactus.jpg',            titel:'Christmas Cactus',            technik:'acrylic on canvas',jahr:'2020', groesse:'18×24 cm'   },
+  { name:'cococunt blood orange.jpg',       titel:'Coconut Blood Orange',        technik:'acrylic on canvas',jahr:'2021', groesse:'30×40 cm'   },
+  { name:'diving on the Seychelles.jpg',    titel:'Diving on the Seychelles',    technik:'oil on canvas',    jahr:'2026', groesse:'60×80 cm'   },
+  { name:'fluffy cat.jpg',                  titel:'Fluffy Cat',                  technik:'acrylic on canvas',jahr:'2025', groesse:'30×40 cm'   },
+  { name:'Goethes Faust.jpg',               titel:"Goethe's Faust",              technik:'oil on canvas',    jahr:'2025', groesse:'100×100 cm' },
+  { name:'In the deserts of San Diego.jpg', titel:'In the Deserts of San Diego', technik:'oil on canvas',    jahr:'2026', groesse:'50×100 cm'  },
+  { name:'In the shadows.jpg',              titel:'In the Shadows',              technik:'oil on canvas',    jahr:'2025', groesse:'50×60 cm'   },
+  { name:'in the sunshine.jpg',             titel:'In the Sunshine',             technik:'oil on canvas',    jahr:'2026', groesse:'50×70 cm'   },
+  { name:'look on me.jpg',                  titel:'Look on Me',                  technik:'oil on canvas',    jahr:'2024', groesse:'50×60 cm'   },
+  { name:'looking ahead.jpg',               titel:'Looking Ahead',               technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
+  { name:'Opulence and common ground.jpg',  titel:'Opulence and Common Ground',  technik:'acrylic on canvas',jahr:'2025', groesse:'50×70 cm'   },
+  { name:'plantains and oranges.jpg',       titel:'Plantains and Oranges',       technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
+  { name:'province in france.jpg',          titel:'Province in France',          technik:'acrylic on canvas',jahr:'2024', groesse:'30×40 cm'   },
+  { name:'Room at the Baltic sea.jpg',      titel:'Room at the Baltic Sea',      technik:'acrylic on canvas',jahr:'2025', groesse:'80×80 cm'   },
+  { name:'room in paris.jpg',               titel:'Room in Paris',               technik:'acrylic on canvas',jahr:'2025', groesse:'80×100 cm'  },
+  { name:'Room in Utah.jpg',                titel:'Room in Utah',                technik:'acrylic on canvas',jahr:'2025', groesse:'40×60 cm'   },
+  { name:'room in venice.jpg',              titel:'Room in Venice',              technik:'acrylic on canvas',jahr:'2024', groesse:'40×60 cm'   },
+  { name:'section of a forest.jpg',         titel:'Section of a Forest',         technik:'oil on canvas',    jahr:'2025', groesse:'30×90 cm'   },
+  { name:'selfportrait with a cat.jpg',     titel:'Self-Portrait with a Cat',    technik:'oil on canvas',    jahr:'2025', groesse:'140×100 cm' },
+  { name:'spring is around the corner.jpg', titel:'Spring Is Around the Corner', technik:'oil on canvas',    jahr:'2026', groesse:'50×70 cm'   },
+  { name:'still live number four.jpg',      titel:'Still Life No. 4',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
+  { name:'still live number one.jpg',       titel:'Still Life No. 1',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
+  { name:'still live number three.jpg',     titel:'Still Life No. 3',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×30 cm'   },
+  { name:'still live number two.jpg',       titel:'Still Life No. 2',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
+  { name:'succulents in the sunset.jpg',    titel:'Succulents in the Sunset',    technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
+  { name:'sunflowers.jpg',                  titel:'Sunflowers',                  technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
+  { name:'tamed jimmy hendrix.jpg',         titel:'Tamed Jimi Hendrix',          technik:'oil on canvas',    jahr:'2024', groesse:'50×60 cm'   },
+  { name:'upwards.jpg',                     titel:'Upwards',                     technik:'acrylic on canvas',jahr:'2025', groesse:'40×50 cm'   },
+  { name:'visiting the market.jpg',         titel:'Visiting the Market',         technik:'acrylic on canvas',jahr:'2023', groesse:'60×80 cm'   },
+  { name:'waiting for the bus.jpg',         titel:'Waiting for the Bus',         technik:'acrylic on canvas',jahr:'2024', groesse:'50×70 cm'   },
+];
+
+let ALL_GALLERY_ITEMS = [];
+
+function getTechLabel(t) {
+  if (!t) return '';
+  if (t.includes('oil'))   return 'Öl';
+  if (t.includes('acrylic')) return 'Acryl';
+  if (t.includes('water')) return 'Aquarell';
+  return t;
+}
+
+// Pending uploads die beim Publizieren hochgeladen werden
+const pendingUploads = [];
+
+function addImageToGallery(file, info = {}) {
+  const grid    = document.getElementById('galleryGrid');
+  const name    = info.titel    || file.name.replace(/\.[^.]+$/, '');
+  const technik = info.technik  || 'acrylic on canvas';
+  const jahr    = info.jahr     || new Date().getFullYear();
+  const groesse = info.groesse  || '';
+  const meta    = [getTechLabel(technik), jahr, groesse].filter(Boolean).join(' · ');
+
+  pendingUploads.push({ ...file, titel: name, technik, jahr, groesse });
+
+  const item = makeGalleryItem({ name: file.name, titel: name, technik, jahr, groesse, dataUrl: file.dataUrl, isNew: true });
+  const first = grid.querySelector('.gallery-item');
+  if (first) grid.insertBefore(item, first);
+  else grid.appendChild(item);
+
+  updatePositions();
+  updatePendingChanges();
+  addActivity('🖼️', 'img', `„${name}" hinzugefügt`, `Galerie · ${meta}`);
+  initDragDrop();
+}
+
+/* Einheitliche Funktion für alle Gallery Items */
+function makeGalleryItem(bild) {
+  const filename = bild.name || bild.bild || '';
+  const name     = bild.titel || filename.replace(/\.[^.]+$/, '');
+  const technik  = bild.technik || 'acrylic on canvas';
+  const meta     = [getTechLabel(technik), bild.jahr, bild.groesse].filter(Boolean).join(' · ');
+  const imgSrc   = bild.dataUrl
+    ? bild.dataUrl
+    : filename
+      ? `https://raw.githubusercontent.com/BarbaraFriehs/barbara-friehs-website/main/${encodeURIComponent(filename)}`
+      : '';
+
+  const item = document.createElement('div');
+  item.className = 'gallery-item';
+  item.dataset.filename = filename;
+  item.dataset.titel    = name.toLowerCase();
+  item.dataset.technik  = technik.toLowerCase();
+  item.dataset.jahr     = bild.jahr || '';
+  item.dataset.groesse  = bild.groesse || '';
+
+  item.innerHTML = `
+    <div class="gallery-thumb">
+      ${imgSrc
+        ? `<img src="${imgSrc}" alt="${name}" loading="lazy" onerror="this.style.opacity='.2'">`
+        : `<div style="height:120px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:2rem">🖼️</div>`}
+    </div>
+    <div class="sold-stamp">SOLD</div>
+    <div class="sold-badge">Verkauft</div>
+    <div class="gallery-info">
+      <div class="gallery-name">${name}</div>
+      <div class="gallery-meta">${bild.isNew ? `<span style="color:var(--accent)">● Neu</span> · ` : ''}${meta}</div>
+    </div>
+    <div class="gallery-overlay">
+      <button class="overlay-btn sold-btn" title="Verkauft">SOLD</button>
+      <button class="overlay-btn feat-btn" title="Titelbild">★</button>
+      <button class="overlay-btn edit-btn" title="Bearbeiten">✏️</button>
+      <button class="overlay-btn delete-btn" title="Löschen" style="color:var(--red)">🗑️</button>
+    </div>`;
+
+  item.querySelector('.sold-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    const sold = item.classList.toggle('is-sold');
+    item.querySelector('.sold-btn').textContent = sold ? '↩' : 'SOLD';
+    showToast(sold ? `"${name}" als verkauft markiert` : `"${name}" wieder verfügbar`, 'success');
+  });
+
+  item.querySelector('.feat-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('#galleryGrid .gallery-item').forEach(el => el.classList.remove('is-featured'));
+    item.classList.add('is-featured');
+    localStorage.setItem('bf_titelbild', filename);
+    showToast(`★ "${name}" ist jetzt das Titelbild`, 'success');
+    addActivity('★', 'publish', `„${name}" als Titelbild gesetzt`, '');
+  });
+
+  item.querySelector('.edit-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    openEditModal(item);
+  });
+
+  item.querySelector('.delete-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    confirmDelete(name, () => {
+      item.style.transition = 'opacity .25s, transform .25s';
+      item.style.opacity = '0';
+      item.style.transform = 'scale(.9)';
+      setTimeout(() => { item.remove(); updatePositions(); filterGallery(); updateDashboard(); }, 260);
+      showToast(`"${name}" gelöscht`, 'error');
+      addActivity('🗑️', 'text', `„${name}" gelöscht`, 'Galerie');
+    });
+  });
+
+  if (bild.sold) item.classList.add('is-sold');
+  return item;
+}
+
+// Alias für Kompatibilität
+function createGalleryItem(bild, isNew) { return makeGalleryItem({ ...bild, isNew }); }
+
+/* ===== GALLERY VIEW TOGGLE ===== */
+let currentView = 'grid';
+
+
+
+function updatePositions() {
+  const items = Array.from(document.querySelectorAll('#galleryGrid .gallery-item'));
+  items.forEach((item, i) => {
+    let badge = item.querySelector('.sort-num');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'sort-num';
+      item.appendChild(badge);
+    }
+    badge.textContent = i + 1;
+  });
+  ALL_GALLERY_ITEMS = items;
+}
+
+/* ===== DRAG & DROP ===== */
+let sortableInstance = null;
+
+function initDragDrop() {
+  const grid = document.getElementById('galleryGrid');
+  if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
+
+  sortableInstance = new Sortable(grid, {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    forceFallback: true,
+    fallbackTolerance: 5,
+    onEnd: () => {
+      updatePositions();
+      updatePendingChanges();
+      showToast('Reihenfolge geändert — beim Publizieren übernommen', 'success');
+    }
+  });
+}
+
+function destroyDragDrop() {
+  if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
+}
+
+function buildGallery(bilder) {
+  const grid = document.getElementById('galleryGrid');
+  // Alle außer Upload-Zone entfernen
+  Array.from(grid.querySelectorAll('.gallery-item')).forEach(el => el.remove());
+  ALL_GALLERY_ITEMS = [];
+
+  bilder.forEach(b => {
+    const item = createGalleryItem(b, false);
+    grid.appendChild(item);
+    ALL_GALLERY_ITEMS.push(item);
+  });
+
+  // Badge aktualisieren
+  const badge = document.querySelector('.nav-badge');
+  if (badge) badge.textContent = bilder.length;
+
+  // Sort-grid Klasse sicherstellen
+  grid.classList.add('sort-grid');
+  grid.classList.remove('masonry-preview');
+  // Positionsnummern setzen
+  updatePositions();
+}
+
+function filterGallery() {
+  const search = (document.querySelector('.search-input')?.value || '').toLowerCase();
+  const activeBtn = document.querySelector('.gallery-toolbar .filter-btn.active');
+  const filter = activeBtn ? (activeBtn.dataset.filter || 'all') : 'all';
+  const yearFilter = document.getElementById('yearFilter')?.value || '';
+  const items = document.getElementById('galleryGrid').querySelectorAll('.gallery-item');
+
+  items.forEach(item => {
+    const titel   = item.dataset.titel   || '';
+    const technik = item.dataset.technik || '';
+    const jahr    = item.dataset.jahr    || '';
+
+    const matchSearch = !search || titel.includes(search) || technik.includes(search);
+    const matchFilter = filter === 'all' || technik.includes(filter);
+    const matchYear   = !yearFilter || jahr === yearFilter;
+
+    item.style.display = (matchSearch && matchFilter && matchYear) ? '' : 'none';
+  });
+}
+
+// Suche Event
+document.querySelector('.search-input')?.addEventListener('input', filterGallery);
+
+// Filter Buttons
+document.querySelectorAll('.gallery-toolbar .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.gallery-toolbar .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterGallery();
+  });
+});
+
+// Bilder von GitHub laden
+async function loadGalleryFromGitHub() {
+  const token = getToken ? getToken() : '';
+  const headers = token ? { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' } : {};
+
+  // config.json laden — Metadaten aktualisieren + Reihenfolge setzen
+  try {
+    const res = await fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/config.json', { headers });
+    if (res.ok) {
+      const file = await res.json();
+      // Robustes UTF-8 Decoding via TextDecoder
+      const base64 = file.content.replace(/\n/g, '');
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const decoded = new TextDecoder('utf-8').decode(bytes);
+      const data = JSON.parse(decoded);
+      if (data.bilder && data.bilder.length > 0) {
+        const knownNames = new Set(KNOWN_BILDER.map(b => b.name || b.bild));
+
+        // Metadaten ALLER Bilder aus config.json ins DOM übernehmen
+        data.bilder.forEach(b => {
+          const item = Array.from(document.querySelectorAll('#galleryGrid .gallery-item'))
+            .find(el => el.dataset.filename === b.bild);
+          if (!item) return;
+          const techLabel = b.technik === 'oil on canvas' ? 'Öl'
+            : b.technik === 'acrylic on canvas' ? 'Acryl'
+            : b.technik === 'watercolour on paper' ? 'Aquarell' : (b.technik || 'Acryl');
+          const meta = [techLabel, b.jahr, b.groesse].filter(Boolean).join(' · ');
+          const nameEl = item.querySelector('.gallery-name');
+          const metaEl = item.querySelector('.gallery-meta');
+          if (nameEl && b.titel) nameEl.textContent = b.titel;
+          if (metaEl) metaEl.textContent = meta;
+          item.dataset.titel   = (b.titel || '').toLowerCase();
+          item.dataset.technik = (b.technik || '').toLowerCase();
+          item.dataset.jahr    = b.jahr || '';
+          item.dataset.groesse = b.groesse || '';
+          if (b.sold) item.classList.add('is-sold');
+          else item.classList.remove('is-sold');
+        });
+
+        // Neue Bilder (nicht in KNOWN_BILDER) hinzufügen
+        const grid = document.getElementById('galleryGrid');
+        const newBilder = data.bilder.filter(b => !knownNames.has(b.bild));
+        newBilder.forEach(b => {
+          const imgData = { ...b, name: b.bild };
+          const item = createGalleryItem(imgData, false);
+          grid.appendChild(item);
+        });
+
+        // DOM in config.json Reihenfolge bringen
+        const itemMap = {};
+        grid.querySelectorAll('.gallery-item').forEach(el => {
+          itemMap[el.dataset.filename] = el;
+        });
+        data.bilder.forEach(b => {
+          const el = itemMap[b.bild];
+          if (el) grid.appendChild(el); // ans Ende — in der richtigen Reihenfolge
+        });
+
+        const badge = document.querySelector('.nav-badge');
+        if (badge) badge.textContent = data.bilder.length;
+      }
+    }
+  } catch(e) { console.log('config.json nicht geladen:', e); }
+  // Gespeichertes Titelbild markieren
+  const savedFeatured = localStorage.getItem('bf_titelbild');
+  if (savedFeatured) {
+    const featuredItem = Array.from(document.querySelectorAll('#galleryGrid .gallery-item'))
+      .find(el => el.dataset.filename === savedFeatured);
+    if (featuredItem) {
+      featuredItem.classList.add('is-featured');
+      const btn = featuredItem.querySelector('.featured-btn');
+      if (btn) btn.style.color = 'var(--accent)';
+    }
+  }
+  updatePositions();
+  updateDashboard();
+  // Jahr-Filter befüllen
+  const years = [...new Set(
+    Array.from(document.querySelectorAll('#galleryGrid .gallery-item'))
+      .map(el => el.dataset.jahr).filter(Boolean)
+  )].sort((a,b) => b-a);
+  const sel = document.getElementById('yearFilter');
+  if (sel) {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Alle Jahre</option>';
+    years.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      if (y === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+// Service Worker registrieren
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Galerie beim Start laden (nur wenn eingeloggt)
+if (localStorage.getItem(AUTH_KEY) === '1') {
+  buildGallery(KNOWN_BILDER);
+  setTimeout(() => initDragDrop(), 200);
+  setTimeout(() => loadGalleryFromGitHub(), 100);
+}
+
+/* ===== AUSSTEHENDE ÄNDERUNGEN ===== */
+function updatePendingChanges() {
+  const list = document.getElementById('pendingChangesList');
+  if (!list) return;
+  const items = [];
+  const pending = typeof pendingUploads !== 'undefined' ? pendingUploads : [];
+  if (pending.length > 0) {
+    items.push({ color: 'var(--green)', text: `Galerie: ${pending.length} neue${pending.length === 1 ? 's Bild' : ' Bilder'}` });
+  }
+  if (localStorage.getItem(TEXTE_KEY)) {
+    items.push({ color: 'var(--blue)', text: 'Texte & Kontakt: Änderungen gespeichert' });
+  }
+  if (items.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted)">Keine ausstehenden Änderungen</div>';
+  } else {
+    list.innerHTML = items.map(i =>
+      `<div style="display:flex;align-items:center;gap:.6rem">
+        <span style="color:${i.color}">●</span> ${i.text}
+      </div>`
+    ).join('');
+  }
+}
+
+/* ===== BESTÄTIGUNGS-DIALOG ===== */
+let _confirmCallback = null;
+
+function confirmDelete(name, callback) {
+  _confirmCallback = callback;
+  document.getElementById('confirmText').textContent = `"${name}" wird aus der Galerie entfernt.`;
+  const modal = document.getElementById('confirmModal');
+  modal.style.display = 'flex';
+}
+
+function closeConfirm(confirmed) {
+  document.getElementById('confirmModal').style.display = 'none';
+  if (confirmed && _confirmCallback) _confirmCallback();
+  _confirmCallback = null;
+}
+
+// ESC schließt den Dialog
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeConfirm(false);
+});
+
+/* ===== TOAST ===== */
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  const icon  = document.getElementById('toastIcon');
+  const text  = document.getElementById('toastText');
+  toast.className = `toast ${type}`;
+  icon.textContent = type === 'success' ? '✓' : '✕';
+  text.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ===== EINSTELLUNGEN — GitHub Token lokal speichern ===== */
+const STORAGE_KEY = 'bf_github_token';
+
+function getToken() {
+  return localStorage.getItem(STORAGE_KEY) || '';
+}
+function saveToken(t) {
+  localStorage.setItem(STORAGE_KEY, t.trim());
+  // Nach Token-Speicherung Galerie neu laden
+  setTimeout(() => loadGalleryFromGitHub(), 200);
+}
+
+// Einstellungs-Modal öffnen
+function openSettings() {
+  const m = document.getElementById('settingsModal');
+  m.style.display = 'flex';
+  document.getElementById('tokenInput').value = getToken();
+}
+function closeSettings() {
+  document.getElementById('settingsModal').style.display = 'none';
+}
+function saveSettings() {
+  const t = document.getElementById('tokenInput').value.trim();
+  if (!t) { showToast('Bitte Token eingeben!', 'error'); return; }
+  saveToken(t);
+  closeSettings();
+  showToast('✓ Token gespeichert!', 'success');
+  updateTokenStatus();
+}
+function updateTokenStatus() {
+  const t = getToken();
+  const el = document.getElementById('tokenStatus');
+  if (el) {
+    el.textContent = t ? '✓ Token gespeichert' : '⚠ Kein Token';
+    el.style.color = t ? 'var(--green)' : 'var(--red)';
+  }
+}
+updateTokenStatus();
+
+/* ===== DASHBOARD ===== */
+const ACTIVITY_KEY = 'bf_activities';
+const PUBLISH_KEY  = 'bf_last_publish';
+
+function getActivities() {
+  try { return JSON.parse(localStorage.getItem(ACTIVITY_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveActivities(arr) {
+  localStorage.setItem(ACTIVITY_KEY, JSON.stringify(arr.slice(0, 20)));
+}
+function addActivity(icon, iconClass, title, sub) {
+  const now = new Date();
+  const time = now.toLocaleDateString('de-AT', { weekday:'short', day:'2-digit', month:'2-digit' })
+    + ', ' + now.toLocaleTimeString('de-AT', { hour:'2-digit', minute:'2-digit' });
+  const acts = getActivities();
+  acts.unshift({ icon, iconClass, title, sub, time, ts: now.getTime() });
+  saveActivities(acts);
+  renderActivities();
+}
+function renderActivities() {
+  const list = document.getElementById('activityList');
+  if (!list) return;
+  const acts = getActivities();
+  if (acts.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted);padding:.8rem 0;font-size:.82rem">Noch keine Aktivitäten</div>';
+    return;
+  }
+  list.innerHTML = acts.map(a => `
+    <div class="activity-item">
+      <div class="activity-icon ${a.iconClass}">${a.icon}</div>
+      <div class="activity-text">
+        <strong>${a.title}</strong>
+        <span>${a.sub}</span>
+      </div>
+      <div class="activity-time">${a.time}</div>
+    </div>`).join('');
+}
+function updateDashboard() {
+  // Werke zählen
+  const werkeEl = document.getElementById('dash-werke');
+  if (werkeEl) {
+    const count = document.querySelectorAll('#galleryGrid .gallery-item').length;
+    werkeEl.textContent = count || '—';
+  }
+  // Verkauft zählen
+  const soldEl = document.getElementById('dash-sold');
+  if (soldEl) {
+    const sold = document.querySelectorAll('#galleryGrid .gallery-item.is-sold').length;
+    soldEl.textContent = sold;
+  }
+  // Letztes Publish
+  const lastPublish = localStorage.getItem(PUBLISH_KEY);
+  const valEl = document.getElementById('dash-update-val');
+  const subEl = document.getElementById('dash-update-sub');
+  if (valEl && subEl) {
+    if (lastPublish) {
+      const d = new Date(parseInt(lastPublish));
+      const now = new Date();
+      const diffMs = now - d;
+      const diffMin = Math.floor(diffMs / 60000);
+      const diffH   = Math.floor(diffMs / 3600000);
+      const diffD   = Math.floor(diffMs / 86400000);
+      let ago;
+      if (diffMin < 1)       ago = 'Gerade eben';
+      else if (diffMin < 60) ago = `vor ${diffMin} Min.`;
+      else if (diffH < 24)   ago = `vor ${diffH} Std.`;
+      else if (diffD === 1)  ago = 'Gestern';
+      else                   ago = `vor ${diffD} Tagen`;
+      valEl.textContent = d.toLocaleDateString('de-AT', { day:'2-digit', month:'2-digit' });
+      subEl.textContent = ago;
+    } else {
+      valEl.textContent = '—';
+      subEl.textContent = 'Noch nicht publiziert';
+    }
+  }
+  renderActivities();
+}
+
+// Dashboard aktualisieren wenn Galerie-Tab geöffnet wird
+
+/* ===== ECHTE GITHUB PUBLISH FUNKTION ===== */
+async function startPublish() {
+  const token = getToken();
+  if (!token) {
+    showToast('⚠ Bitte zuerst GitHub Token in Einstellungen eingeben!', 'error');
+    openSettings();
+    return;
+  }
+
+  const btn  = document.getElementById('publishBtn');
+  const fill = document.getElementById('progressFill');
+  const log  = document.getElementById('deployLog');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Wird publiziert...';
+  log.innerHTML = '';
+  fill.style.width = '5%';
+
+  function addLog(msg, color) {
+    const line = document.createElement('div');
+    line.textContent = msg;
+    if (color) line.style.color = color;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  const OWNER = 'BarbaraFriehs';
+  const REPO  = 'barbara-friehs-website';
+  const HEADERS = {
+    'Authorization': `token ${token}`,
+    'Content-Type': 'application/json',
+    'Accept': 'application/vnd.github.v3+json'
+  };
+
+  try {
+    addLog('→ Verbinde mit GitHub...');
+    fill.style.width = '20%';
+
+    // Schritt 1: Aktuelle config.json von GitHub holen
+    addLog('→ Lade aktuelle Bilderliste...');
+    const configAPI = `https://api.github.com/repos/${OWNER}/${REPO}/contents/config.json`;
+    let configSha = null;
+    let configData = { bilder: [] };
+    try {
+      const configRes = await fetch(configAPI, { headers: HEADERS });
+      if (configRes.ok) {
+        const configFile = await configRes.json();
+        configSha = configFile.sha;
+        const base64c = configFile.content.replace(/\n/g, '');
+        const binaryc = atob(base64c);
+        const bytesc = new Uint8Array(binaryc.length);
+        for (let i = 0; i < binaryc.length; i++) bytesc[i] = binaryc.charCodeAt(i);
+        configData = JSON.parse(new TextDecoder('utf-8').decode(bytesc));
+      }
+    } catch(e) { addLog('  → Neue config.json wird erstellt'); }
+    fill.style.width = '30%';
+
+    // Schritt 2: Neue Bilder hochladen und zur config hinzufügen
+    if (typeof pendingUploads !== 'undefined' && pendingUploads.length > 0) {
+      addLog(`→ ${pendingUploads.length} neue Bild(er) werden hochgeladen...`);
+      let uploaded = 0;
+      for (const img of pendingUploads) {
+        const imgAPI = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(img.name)}`;
+        let imgSha = null;
+        try {
+          const checkRes = await fetch(imgAPI, { headers: HEADERS });
+          if (checkRes.ok) { const ex = await checkRes.json(); imgSha = ex.sha; }
+        } catch(e) {}
+        const body = { message: `Add image: ${img.name}`, content: img.base64 };
+        if (imgSha) body.sha = imgSha;
+        const res = await fetch(imgAPI, { method:'PUT', headers: HEADERS, body: JSON.stringify(body) });
+        if (res.ok) {
+          addLog(`  ✓ ${img.name}`);
+          uploaded++;
+          // Zur config hinzufügen
+          const exists = configData.bilder.find(b => b.bild === img.name);
+          if (!exists) {
+            configData.bilder.push({
+              bild:    img.name,
+              titel:   img.titel   || img.name.replace(/\.[^.]+$/, ''),
+              technik: img.technik || 'acrylic on canvas',
+              jahr:    String(img.jahr || new Date().getFullYear()),
+              groesse: img.groesse || '',
+              farbe:   '#888888',
+              sold:    false
+            });
+          }
+        } else {
+          addLog(`  ✗ ${img.name} fehlgeschlagen`, 'var(--red)');
+        }
+        fill.style.width = (30 + (uploaded / pendingUploads.length) * 40) + '%';
+      }
+      pendingUploads.length = 0;
+      addLog(`✓ ${uploaded} Bild(er) hochgeladen`);
+    }
+    fill.style.width = '75%';
+
+    // Schritt 3: Alle Änderungen aus App lesen
+    addLog('→ Änderungen werden gesammelt...');
+    const allItems = document.querySelectorAll('#galleryGrid .gallery-item');
+    const itemChanges = {}; // filename → {titel, technik, jahr, groesse, sold}
+
+    allItems.forEach(item => {
+      const filename = item.dataset.filename;
+      if (!filename) return;
+      const metaText = item.querySelector('.gallery-meta')?.textContent || '';
+      const parts = metaText.replace('● Neu · ', '').split(' · ');
+      const techLabel = parts[0]?.trim() || '';
+      const techMap = {'Öl':'oil on canvas','Acryl':'acrylic on canvas','Aquarell':'watercolour on paper','Mixed Media':'mixed media'};
+      // data-technik enthält den vollen Technik-String (z.B. 'oil on canvas'),
+      // techMap konvertiert nur Labels (Öl → oil on canvas) als Fallback
+      const technikVal = item.dataset.technik && item.dataset.technik.includes(' ')
+        ? item.dataset.technik   // z.B. 'oil on canvas' direkt
+        : (techMap[techLabel] || 'acrylic on canvas');
+      itemChanges[filename] = {
+        titel:   item.querySelector('.gallery-name')?.textContent?.trim() || '',
+        technik: technikVal,
+        jahr:    item.dataset.jahr    || parts[1]?.trim() || '',
+        groesse: item.dataset.groesse !== undefined && item.dataset.groesse !== ''
+                   ? item.dataset.groesse
+                   : (parts[2]?.trim() || ''),
+        sold:    item.classList.contains('is-sold')
+      };
+    });
+
+    // Reihenfolge aus DOM übernehmen — DOM ist die einzige Wahrheitsquelle
+    // configData als Lookup für farbe und andere Felder die nicht im DOM sind
+    const configLookup = {};
+    configData.bilder.forEach(b => { configLookup[b.bild] = b; });
+    const knownLookup = {};
+    KNOWN_BILDER.forEach(b => { knownLookup[b.name] = b; });
+
+    // configData.bilder in DOM-Reihenfolge aufbauen
+    configData.bilder = Array.from(allItems)
+      .map(item => {
+        const filename = item.dataset.filename;
+        if (!filename || !itemChanges[filename]) return null;
+        const changes = itemChanges[filename];
+        const existing = configLookup[filename] || {};
+        const known = knownLookup[filename] || {};
+        return {
+          bild:    filename,
+          titel:   changes.titel   || existing.titel   || known.titel   || filename,
+          technik: changes.technik || existing.technik || known.technik || 'acrylic on canvas',
+          jahr:    changes.jahr    || existing.jahr    || known.jahr    || String(new Date().getFullYear()),
+          groesse: changes.groesse !== undefined ? changes.groesse : (existing.groesse || known.groesse || ''),
+          farbe:   existing.farbe  || known.farbe  || '#888888',
+          sold:    changes.sold
+        };
+      })
+      .filter(Boolean);
+
+    // Titelbild speichern
+    const titelbildFilename = localStorage.getItem('bf_titelbild');
+    if (titelbildFilename) configData.titelbild = titelbildFilename;
+
+    // Änderungen anwenden
+    configData.bilder.forEach(b => {
+      const changes = itemChanges[b.bild];
+      if (changes) {
+        if (changes.titel)   b.titel   = changes.titel;
+        if (changes.technik) b.technik = changes.technik;
+        if (changes.jahr)    b.jahr    = changes.jahr;
+        // groesse immer übernehmen (auch wenn leer — user hat sie vielleicht gelöscht)
+        b.groesse = changes.groesse;
+        b.sold = changes.sold;
+      }
+    });
+
+    // Schritt 3: config.json auf GitHub speichern
+    addLog('→ Bilderliste wird gespeichert...');
+    // btoa() kann mit Unicode (00d7, 00e4, 00f6 etc.) nicht umgehen 2192 UTF-8 Encoding n00f6tig
+    const configJson = JSON.stringify(configData, null, 2);
+    const configContent = btoa(unescape(encodeURIComponent(configJson)));
+    const configBody = {
+      message: 'Update config.json via Barbara Manager',
+      content: configContent
+    };
+    if (configSha) configBody.sha = configSha;
+    const configPut = await fetch(configAPI, {
+      method: 'PUT', headers: HEADERS,
+      body: JSON.stringify(configBody)
+    });
+    if (configPut.ok) addLog('✓ Bilderliste gespeichert');
+    else addLog('✗ config.json Fehler', 'var(--red)');
+
+    // Schritt 4: Website index.html holen, Texte einarbeiten, zurückspeichern
+    addLog('→ Website-Texte werden aktualisiert...');
+    fill.style.width = '82%';
+    const indexAPI = `https://api.github.com/repos/${OWNER}/${REPO}/contents/index.html`;
+    try {
+      const indexRes = await fetch(indexAPI, { headers: HEADERS });
+      if (indexRes.ok) {
+        const indexFile = await indexRes.json();
+        const indexBinary = atob(indexFile.content.replace(/\n/g, ''));
+        const indexBytes = new Uint8Array(indexBinary.length);
+        for (let i = 0; i < indexBinary.length; i++) indexBytes[i] = indexBinary.charCodeAt(i);
+        let indexHtml = new TextDecoder('utf-8').decode(indexBytes);
+        indexHtml = applyChangesToHTML(indexHtml);
+        const encoder = new TextEncoder();
+        const encoded = encoder.encode(indexHtml);
+        let binary = '';
+        encoded.forEach(b => binary += String.fromCharCode(b));
+        const indexContent = btoa(binary);
+        const indexPut = await fetch(indexAPI, {
+          method: 'PUT', headers: HEADERS,
+          body: JSON.stringify({
+            message: 'Update website texts via Barbara Manager',
+            content: indexContent,
+            sha: indexFile.sha
+          })
+        });
+        if (indexPut.ok) addLog('✓ Website-Texte gespeichert');
+        else addLog('⚠ Texte konnten nicht gespeichert werden', 'var(--accent)');
+      }
+    } catch(e) { addLog('⚠ Texte übersprungen: ' + e.message, 'var(--accent)'); }
+
+    fill.style.width = '90%';
+    addLog('→ Cloudflare deployed automatisch...');
+    await new Promise(r => setTimeout(r, 1500));
+    fill.style.width = '100%';
+    addLog('✓ barbarafriehs.at wird aktualisiert!', 'var(--green)');
+
+    btn.disabled = false;
+    btn.innerHTML = '✓ Erfolgreich publiziert!';
+    btn.style.background = 'var(--green)';
+    localStorage.setItem(PUBLISH_KEY, Date.now());
+    addActivity('🚀', 'publish', 'Website publiziert', 'barbarafriehs.at · erfolgreich');
+    updateDashboard();
+    showToast('🎉 Website ist live auf barbarafriehs.at!', 'success');
+
+    setTimeout(() => {
+      btn.innerHTML = '🚀 Jetzt auf barbarafriehs.at veröffentlichen';
+      btn.style.background = '';
+      fill.style.width = '0%';
+      log.innerHTML = '<span class="muted">Bereit zum Publizieren...</span>';
+    }, 5000);
+
+  } catch(err) {
+    addLog('✕ Fehler: ' + err.message, 'var(--red)');
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Jetzt auf barbarafriehs.at veröffentlichen';
+    fill.style.width = '0%';
+    showToast('Fehler: ' + err.message, 'error');
+  }
+}
+
+/* Texte lokal zwischenspeichern */
+const TEXTE_KEY = 'bf_texte';
+function saveTexteLocal() {
+  const data = getTexteValues();
+  localStorage.setItem(TEXTE_KEY, JSON.stringify(data));
+  addActivity('✏️', 'text', 'Texte gespeichert', 'Werden beim nächsten Publizieren übernommen');
+  updatePendingChanges();
+  showToast('✓ Gespeichert! Beim Publizieren wird die Website aktualisiert.', 'success');
+}
+function getTexteValues() {
+  return {
+    name:        document.getElementById('txt-name')?.value        || 'Barbara Friehs',
+    standort:    document.getElementById('txt-standort')?.value    || 'Graz, Austria',
+    tagline1:    document.getElementById('txt-tagline1')?.value    || 'Painting',
+    tagline2:    document.getElementById('txt-tagline2')?.value    || 'with passion',
+    beschreibung:document.getElementById('txt-beschreibung')?.value|| '',
+    ueber_titel: document.getElementById('txt-ueber-titel')?.value || '',
+    ueber_text1: document.getElementById('txt-ueber1')?.value      || '',
+    ueber_text2: document.getElementById('txt-ueber2')?.value      || '',
+    email:       document.getElementById('txt-email')?.value       || '',
+    instagram:   document.getElementById('txt-instagram')?.value   || '',
+    linkedin:    document.getElementById('txt-linkedin')?.value    || '',
+  };
+}
+function loadTexteLocal() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(TEXTE_KEY) || 'null');
+    if (!saved) return;
+    Object.entries({
+      'txt-name': saved.name, 'txt-standort': saved.standort,
+      'txt-tagline1': saved.tagline1, 'txt-tagline2': saved.tagline2,
+      'txt-beschreibung': saved.beschreibung, 'txt-ueber-titel': saved.ueber_titel,
+      'txt-ueber1': saved.ueber_text1, 'txt-ueber2': saved.ueber_text2,
+      'txt-email': saved.email, 'txt-instagram': saved.instagram,
+      'txt-linkedin': saved.linkedin,
+    }).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el && val) el.value = val;
+    });
+  } catch(e) {}
+}
+loadTexteLocal();
+
+/* Änderungen in die Website index.html einarbeiten */
+function applyChangesToHTML(html) {
+  const t = getTexteValues();
+  const esc = s => (s||'').replace(/"/g, '&quot;');
+  try {
+    html = html.replace(/name:\s*"[^"]*"/,         `name:         "${esc(t.name)}"`);
+    html = html.replace(/standort:\s*"[^"]*"/,     `standort:     "${esc(t.standort)}"`);
+    html = html.replace(/tagline1:\s*"[^"]*"/,     `tagline1:     "${esc(t.tagline1)}"`);
+    html = html.replace(/tagline2:\s*"[^"]*"/,     `tagline2:     "${esc(t.tagline2)}"`);
+    html = html.replace(/beschreibung:\s*"[^"]*"/, `beschreibung: "${esc(t.beschreibung)}"`);
+    html = html.replace(/ueber_titel:\s*"[^"]*"/,  `ueber_titel:  "${esc(t.ueber_titel)}"`);
+    html = html.replace(/ueber_text1:\s*"[^"]*"/,  `ueber_text1:  "${esc(t.ueber_text1)}"`);
+    html = html.replace(/ueber_text2:\s*"[^"]*"/,  `ueber_text2:  "${esc(t.ueber_text2)}"`);
+    html = html.replace(/email:\s*"[^"]*"/,        `email:        "${esc(t.email)}"`);
+    html = html.replace(/instagram_handle:\s*"[^"]*"/, `instagram_handle: "${esc(t.instagram)}"`);
+    html = html.replace(/instagram:\s*"[^"]*"/,    `instagram:    "https://instagram.com/${esc(t.instagram)}"`);
+    html = html.replace(/linkedin:\s*"[^"]*"/,     `linkedin:     "${esc(t.linkedin)}"`);
+  } catch(e) { console.log('applyChangesToHTML Fehler:', e); }
+  return html;
+}
+</script>
+
+<!-- ===== BILD-INFO MODAL ===== -->
+<div class="img-modal-backdrop" id="imgModal">
+  <div class="img-modal">
+    <img class="img-modal-preview" id="imgModalPreview" src="" alt="">
+    <div class="img-modal-body">
+      <div class="img-modal-title">📸 Bilddetails eingeben</div>
+      <div class="img-modal-grid">
+        <div class="img-modal-group full">
+          <label class="img-modal-label">Titel des Werks</label>
+          <input class="img-modal-input" id="imgTitle" placeholder="z.B. Sunflowers" autocomplete="off">
+        </div>
+        <div class="img-modal-group">
+          <label class="img-modal-label">Technik</label>
+          <select class="img-modal-select" id="imgTechnik">
+            <option value="acrylic on canvas">Acryl</option>
+            <option value="oil on canvas">Öl</option>
+          </select>
+        </div>
+        <div class="img-modal-group">
+          <label class="img-modal-label">Jahr</label>
+          <input class="img-modal-input" id="imgJahr" placeholder="2024" maxlength="4" type="number" min="1990" max="2099">
+        </div>
+        <div class="img-modal-group">
+          <label class="img-modal-label">Breite (cm)</label>
+          <input class="img-modal-input" id="imgBreite" placeholder="80" type="number" min="1">
+        </div>
+        <div class="img-modal-group">
+          <label class="img-modal-label">Höhe (cm)</label>
+          <input class="img-modal-input" id="imgHoehe" placeholder="60" type="number" min="1">
+        </div>
+      </div>
+      <div class="img-modal-footer">
+        <button class="img-modal-cancel" id="imgModalCancel" onclick="cancelImgModal()">Abbrechen</button>
+        <button class="img-modal-confirm" id="imgModalConfirm" onclick="confirmImgModal()">✓ Bild hinzufügen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EDIT-MODAL ===== -->
+<div class="edit-modal-backdrop" id="editModal" style="display:none">
+  <div class="edit-modal">
+    <div class="edit-modal-title">
+      ✏️ Bild bearbeiten
+      <button class="edit-modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="img-modal-grid">
+      <div class="img-modal-group full">
+        <label class="img-modal-label">Titel</label>
+        <input class="img-modal-input" id="editTitle" placeholder="Titel des Werks">
+      </div>
+      <div class="img-modal-group">
+        <label class="img-modal-label">Technik</label>
+        <select class="img-modal-select" id="editTechnik">
+          <option value="acrylic on canvas">Acryl</option>
+          <option value="oil on canvas">Öl</option>
+        </select>
+      </div>
+      <div class="img-modal-group">
+        <label class="img-modal-label">Jahr</label>
+        <input class="img-modal-input" id="editJahr" type="number" min="1990" max="2099">
+      </div>
+      <div class="img-modal-group">
+        <label class="img-modal-label">Breite (cm)</label>
+        <input class="img-modal-input" id="editBreite" type="number" min="1">
+      </div>
+      <div class="img-modal-group">
+        <label class="img-modal-label">Höhe (cm)</label>
+        <input class="img-modal-input" id="editHoehe" type="number" min="1">
+      </div>
+    </div>
+    <div class="img-modal-footer" style="margin-top:1.2rem">
+      <button class="img-modal-cancel" onclick="closeEditModal()">Abbrechen</button>
+      <button class="img-modal-confirm" onclick="confirmEditModal()">✓ Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EINSTELLUNGS-MODAL ===== -->
+<div id="settingsModal" style="display:none" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#181818;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:2rem;width:480px;max-width:90vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <div style="font-size:1rem;font-weight:600">⚙️ GitHub Einstellungen</div>
+      <button onclick="closeSettings()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+    <div style="font-size:.8rem;color:#888;margin-bottom:1rem;line-height:1.6">
+      Gib deinen GitHub Personal Access Token ein. Er wird nur auf diesem Gerät gespeichert und niemals übertragen.
+    </div>
+    <label style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:#888;display:block;margin-bottom:.5rem">GitHub Token</label>
+    <input id="tokenInput" type="password"
+      placeholder="ghp_..."
+      style="width:100%;background:#0f0f0f;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.7rem 1rem;color:#f0ede8;font-family:monospace;font-size:.85rem;outline:none;margin-bottom:.5rem">
+    <div style="font-size:.72rem;color:#888;margin-bottom:1.5rem">
+      Token erstellen: github.com → Settings → Developer settings → Personal access tokens → Repo-Berechtigung auswählen
+    </div>
+    <div style="display:flex;gap:.8rem;justify-content:flex-end">
+      <button onclick="closeSettings()" style="background:none;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.6rem 1.2rem;color:#888;cursor:pointer;font-size:.82rem">Abbrechen</button>
+      <button onclick="saveSettings()" style="background:#c8a882;border:none;border-radius:8px;padding:.6rem 1.4rem;color:#1a1008;font-weight:700;cursor:pointer;font-size:.82rem">Token speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Modals initialisieren
+document.getElementById('settingsModal').style.display = 'none';
+if(document.getElementById('editModal')) document.getElementById('editModal').style.display = 'none';
+if(document.getElementById('imgModal')) document.getElementById('imgModal').style.display = 'none';
+</script>
+<script>
+/* ===== EDIT-MODAL LOGIK ===== */
+let _editTarget = null;
+function openEditModal(item) {
+  document.getElementById('editModal').style.display = 'flex';
+  _editTarget = item;
+  const filename = item.dataset.filename || '';
+  const known = KNOWN_BILDER.find(b => b.name === filename) || {};
+  const currentName = item.querySelector('.gallery-name')?.textContent?.trim() || known.titel || '';
+  const metaText = (item.querySelector('.gallery-meta')?.textContent || '').replace('● Neu · ','');
+  const parts = metaText.split(' · ');
+  const techLabel = parts[0]?.trim() || '';
+  const techMap = {'Öl':'oil on canvas','Acryl':'acrylic on canvas','Aquarell':'watercolour on paper','Mixed Media':'mixed media'};
+  const currentTech = techMap[techLabel] || known.technik || 'acrylic on canvas';
+  const currentJahr = parts[1]?.trim() || known.jahr || String(new Date().getFullYear());
+  const sizeMatch = metaText.match(/([0-9]+)×([0-9]+)/);
+  const groesseMatch = (known.groesse||'').match(/([0-9]+)×([0-9]+)/);
+  const currentB = sizeMatch ? sizeMatch[1] : (groesseMatch ? groesseMatch[1] : '');
+  const currentH = sizeMatch ? sizeMatch[2] : (groesseMatch ? groesseMatch[2] : '');
+  document.getElementById('editTitle').value   = currentName;
+  document.getElementById('editTechnik').value = currentTech;
+  document.getElementById('editJahr').value    = currentJahr;
+  document.getElementById('editBreite').value  = currentB;
+  document.getElementById('editHoehe').value   = currentH;
+  document.getElementById('editTitle').focus();
+}
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+  _editTarget = null;
+}
+function confirmEditModal() {
+  if (!_editTarget) return;
+  var titel   = document.getElementById('editTitle').value.trim();
+  var technik = document.getElementById('editTechnik').value;
+  var jahr    = document.getElementById('editJahr').value;
+  var breite  = document.getElementById('editBreite').value;
+  var hoehe   = document.getElementById('editHoehe').value;
+  var groesse = (breite && hoehe) ? breite + '×' + hoehe + ' cm' : '';
+  var techLabel = technik === 'oil on canvas' ? 'Öl' : technik === 'acrylic on canvas' ? 'Acryl' : technik === 'watercolour on paper' ? 'Aquarell' : 'Mixed Media';
+  var nameEl = _editTarget.querySelector('.gallery-name');
+  var metaEl = _editTarget.querySelector('.gallery-meta');
+  if (nameEl) nameEl.textContent = titel;
+  if (metaEl) metaEl.textContent = [techLabel, jahr, groesse].filter(Boolean).join(' · ');
+  _editTarget.setAttribute('aria-label', titel + ', ' + jahr);
+  // data-Attribute aktualisieren — werden beim Publizieren gelesen
+  _editTarget.dataset.titel   = titel.toLowerCase();
+  _editTarget.dataset.technik = technik.toLowerCase();
+  _editTarget.dataset.jahr    = jahr;
+  _editTarget.dataset.groesse = groesse;
+  var filename = _editTarget.dataset.filename;
+  if (filename && typeof pendingUploads !== 'undefined') {
+    var pu = pendingUploads.find(function(p){ return p.name === filename; });
+    if (pu) { pu.titel=titel; pu.technik=technik; pu.jahr=jahr; pu.groesse=groesse; }
+  }
+  closeEditModal();
+  showToast('"' + titel + '" aktualisiert', 'success');
+  addActivity('✏️', 'text', `„${titel}“ bearbeitet`, 'Galerie · Metadaten aktualisiert');
+}
+document.addEventListener('keydown', function(e) {
+  var em = document.getElementById('editModal');
+  if (e.key === 'Escape' && em && em.classList.contains('open')) closeEditModal();
+});
+</script>
+</body>
+</html>
