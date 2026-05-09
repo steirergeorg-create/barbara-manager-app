@@ -1092,6 +1092,7 @@ document.addEventListener('keydown', e => {
     <div class="topbar">
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
       <div class="topbar-actions">
+        <button class="btn" onclick="refreshGallery()" id="refreshBtn">↻ Aktualisieren</button>
         <button class="btn" onclick="showToast('Vorschau wird geöffnet...', 'success')">👁 Vorschau</button>
         <button class="btn btn-primary" onclick="switchView('publish')">🚀 Publizieren</button>
       </div>
@@ -1531,7 +1532,15 @@ function addImageToGallery(file, info = {}) {
   const groesse = info.groesse  || '';
   const meta    = [getTechLabel(technik), jahr, groesse].filter(Boolean).join(' · ');
 
-  pendingUploads.push({ ...file, titel: name, technik, jahr, groesse });
+  // Bildabmessungen auslesen
+  const img = new Image();
+  img.src = file.dataUrl;
+  img.onload = () => {
+    const pu = pendingUploads.find(p => p.name === file.name);
+    if (pu) { pu.width = img.naturalWidth; pu.height = img.naturalHeight; }
+  };
+
+  pendingUploads.push({ ...file, titel: name, technik, jahr, groesse, width: 0, height: 0 });
 
   const item = makeGalleryItem({ name: file.name, titel: name, technik, jahr, groesse, dataUrl: file.dataUrl, isNew: true });
   const first = grid.querySelector('.gallery-item');
@@ -1628,6 +1637,19 @@ let currentView = 'grid';
 
 
 
+function refreshGallery() {
+  const btn = document.getElementById('refreshBtn');
+  if (btn) { btn.textContent = '↻ Lädt...'; btn.disabled = true; }
+  const grid = document.getElementById('galleryGrid');
+  if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);font-size:.85rem">Galerie wird aktualisiert…</div>';
+  ALL_GALLERY_ITEMS = [];
+  loadGalleryFromGitHub().then(() => {
+    if (btn) { btn.textContent = '↻ Aktualisieren'; btn.disabled = false; }
+    showToast('✓ Galerie aktualisiert', 'success');
+    addActivity('↻', 'publish', 'Galerie aktualisiert', 'Neue Daten von GitHub geladen');
+  });
+}
+
 function updatePositions() {
   const items = Array.from(document.querySelectorAll('#galleryGrid .gallery-item'));
   items.forEach((item, i) => {
@@ -1723,11 +1745,11 @@ document.querySelectorAll('.gallery-toolbar .filter-btn').forEach(btn => {
 });
 
 // Bilder von GitHub laden
-async function loadGalleryFromGitHub() {
+async function loadGalleryFromGitHub() { // returns implicit Promise
   const token = getToken ? getToken() : '';
   const headers = token ? { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' } : {};
 
-  // config.json laden — Metadaten aktualisieren + Reihenfolge setzen
+  // config.json laden — Galerie komplett aufbauen
   try {
     const res = await fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/config.json', { headers });
     if (res.ok) {
@@ -1740,46 +1762,28 @@ async function loadGalleryFromGitHub() {
       const decoded = new TextDecoder('utf-8').decode(bytes);
       const data = JSON.parse(decoded);
       if (data.bilder && data.bilder.length > 0) {
-        const knownNames = new Set(KNOWN_BILDER.map(b => b.name || b.bild));
-
-        // Metadaten ALLER Bilder aus config.json ins DOM übernehmen
-        data.bilder.forEach(b => {
-          const item = Array.from(document.querySelectorAll('#galleryGrid .gallery-item'))
-            .find(el => el.dataset.filename === b.bild);
-          if (!item) return;
-          const techLabel = b.technik === 'oil on canvas' ? 'Öl'
-            : b.technik === 'acrylic on canvas' ? 'Acryl'
-            : b.technik === 'watercolour on paper' ? 'Aquarell' : (b.technik || 'Acryl');
-          const meta = [techLabel, b.jahr, b.groesse].filter(Boolean).join(' · ');
-          const nameEl = item.querySelector('.gallery-name');
-          const metaEl = item.querySelector('.gallery-meta');
-          if (nameEl && b.titel) nameEl.textContent = b.titel;
-          if (metaEl) metaEl.textContent = meta;
-          item.dataset.titel   = (b.titel || '').toLowerCase();
-          item.dataset.technik = (b.technik || '').toLowerCase();
-          item.dataset.jahr    = b.jahr || '';
-          item.dataset.groesse = b.groesse || '';
-          if (b.sold) item.classList.add('is-sold');
-          else item.classList.remove('is-sold');
-        });
-
-        // Neue Bilder (nicht in KNOWN_BILDER) hinzufügen
+        // Galerie komplett neu aufbauen in config.json Reihenfolge
         const grid = document.getElementById('galleryGrid');
-        const newBilder = data.bilder.filter(b => !knownNames.has(b.bild));
-        newBilder.forEach(b => {
-          const imgData = { ...b, name: b.bild };
-          const item = createGalleryItem(imgData, false);
-          grid.appendChild(item);
-        });
+        grid.innerHTML = ''; // Ladeindikator und alte Items entfernen
+        ALL_GALLERY_ITEMS = [];
 
-        // DOM in config.json Reihenfolge bringen
-        const itemMap = {};
-        grid.querySelectorAll('.gallery-item').forEach(el => {
-          itemMap[el.dataset.filename] = el;
-        });
+        // KNOWN_BILDER als Lookup für fehlende Metadaten
+        const knownLookup = {};
+        KNOWN_BILDER.forEach(b => { knownLookup[b.name] = b; });
+
         data.bilder.forEach(b => {
-          const el = itemMap[b.bild];
-          if (el) grid.appendChild(el); // ans Ende — in der richtigen Reihenfolge
+          const known = knownLookup[b.bild] || {};
+          const bild = {
+            name: b.bild,
+            titel: b.titel || known.titel || b.bild,
+            technik: b.technik || known.technik || 'acrylic on canvas',
+            jahr: b.jahr || known.jahr || '',
+            groesse: b.groesse || known.groesse || '',
+            sold: b.sold || false
+          };
+          const item = createGalleryItem(bild, false);
+          grid.appendChild(item);
+          ALL_GALLERY_ITEMS.push(item);
         });
 
         const badge = document.querySelector('.nav-badge');
@@ -1825,9 +1829,12 @@ if ('serviceWorker' in navigator) {
 
 // Galerie beim Start laden (nur wenn eingeloggt)
 if (localStorage.getItem(AUTH_KEY) === '1') {
-  buildGallery(KNOWN_BILDER);
-  setTimeout(() => initDragDrop(), 200);
-  setTimeout(() => loadGalleryFromGitHub(), 100);
+  // Ladeindikator zeigen statt falscher Reihenfolge
+  const grid = document.getElementById('galleryGrid');
+  if (grid) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);font-size:.85rem">Galerie wird geladen…</div>';
+  }
+  loadGalleryFromGitHub();
 }
 
 /* ===== AUSSTEHENDE ÄNDERUNGEN ===== */
@@ -2147,6 +2154,7 @@ async function startPublish() {
         const changes = itemChanges[filename];
         const existing = configLookup[filename] || {};
         const known = knownLookup[filename] || {};
+        const pu = pendingUploads.find(p => p.name === filename);
         return {
           bild:    filename,
           titel:   changes.titel   || existing.titel   || known.titel   || filename,
@@ -2154,7 +2162,9 @@ async function startPublish() {
           jahr:    changes.jahr    || existing.jahr    || known.jahr    || String(new Date().getFullYear()),
           groesse: changes.groesse !== undefined ? changes.groesse : (existing.groesse || known.groesse || ''),
           farbe:   existing.farbe  || known.farbe  || '#888888',
-          sold:    changes.sold
+          sold:    changes.sold,
+          width:   pu?.width  || existing.width  || 0,
+          height:  pu?.height || existing.height || 0,
         };
       })
       .filter(Boolean);
