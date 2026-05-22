@@ -1279,6 +1279,15 @@ document.addEventListener('keydown', e => {
             <span class="muted">Bereit zum Publizieren...</span>
           </div>
 
+          <div id="tokenWarning" style="display:none;background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.3);border-radius:10px;padding:.9rem 1rem;margin-top:1rem;align-items:center;gap:.8rem">
+            <span style="font-size:1.2rem">⚠️</span>
+            <div style="flex:1">
+              <div style="font-size:.85rem;font-weight:600;color:var(--red)">Kein GitHub Token gesetzt</div>
+              <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">Token in den Einstellungen eingeben um publizieren zu können.</div>
+            </div>
+            <button onclick="openSettings()" style="background:var(--red);border:none;border-radius:8px;padding:.5rem .9rem;color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">Jetzt eingeben</button>
+          </div>
+
           <div style="margin-top:1.2rem">
             <button class="big-publish-btn" id="publishBtn" onclick="startPublish()">
               🚀 Jetzt auf barbarafriehs.at veröffentlichen
@@ -1372,7 +1381,7 @@ function switchView(name) {
   const view = document.getElementById('view-' + name);
   if (view) view.classList.add('active');
   document.getElementById('topbarTitle').textContent = titles[name] || name;
-  if (name === 'publish') updatePendingChanges();
+  if (name === 'publish') { updatePendingChanges(); updateTokenStatus(); }
 }
 
 document.querySelectorAll('.nav-item').forEach(el => {
@@ -1831,10 +1840,13 @@ if ('serviceWorker' in navigator) {
 
 // Galerie beim Start laden (nur wenn eingeloggt)
 if (localStorage.getItem(AUTH_KEY) === '1') {
-  initApp();
+  // Ladeindikator zeigen statt falscher Reihenfolge
+  const grid = document.getElementById('galleryGrid');
+  if (grid) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);font-size:.85rem">Galerie wird geladen…</div>';
+  }
+  loadGalleryFromGitHub();
 }
-
-
 
 /* ===== AUSSTEHENDE ÄNDERUNGEN ===== */
 function updatePendingChanges() {
@@ -1927,9 +1939,11 @@ function updateTokenStatus() {
   const t = getToken();
   const el = document.getElementById('tokenStatus');
   if (el) {
-    el.textContent = t ? '✓ Token gespeichert' : '⚠ Kein Token';
+    el.textContent = t ? '✓' : '⚠';
     el.style.color = t ? 'var(--green)' : 'var(--red)';
   }
+  const warning = document.getElementById('tokenWarning');
+  if (warning) warning.style.display = t ? 'none' : 'flex';
 }
 updateTokenStatus();
 
@@ -2407,7 +2421,7 @@ function applyChangesToHTML(html) {
 </div>
 
 <!-- ===== EINSTELLUNGS-MODAL ===== -->
-<div id="settingsModal" style="display:none" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+<div id="settingsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
   <div style="background:#181818;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:2rem;width:480px;max-width:90vw">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
       <div style="font-size:1rem;font-weight:600">⚙️ GitHub Einstellungen</div>
