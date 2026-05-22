@@ -1465,7 +1465,7 @@ async function addNewImages() {
 }
 
 /* ===== GALERIE DATEN ===== */
-const OWNER = 'BarbaraFriehs';
+const OWNER = 'steirergeorg-create';
 const REPO  = 'barbara-friehs-website';
 
 const KNOWN_BILDER = [
@@ -1564,7 +1564,7 @@ function makeGalleryItem(bild) {
   const imgSrc   = bild.dataUrl
     ? bild.dataUrl
     : filename
-      ? `https://raw.githubusercontent.com/BarbaraFriehs/barbara-friehs-website/main/${encodeURIComponent(filename)}`
+      ? `https://raw.githubusercontent.com/steirergeorg-create/barbara-friehs-website/main/${encodeURIComponent(filename)}`
       : '';
 
   const item = document.createElement('div');
@@ -2042,7 +2042,7 @@ async function startPublish() {
     log.scrollTop = log.scrollHeight;
   }
 
-  const OWNER = 'BarbaraFriehs';
+  const OWNER = 'steirergeorg-create';
   const REPO  = 'barbara-friehs-website';
   const HEADERS = {
     'Authorization': `token ${token}`,
