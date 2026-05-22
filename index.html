@@ -1831,11 +1831,8 @@ if ('serviceWorker' in navigator) {
 
 // Galerie beim Start laden (nur wenn eingeloggt)
 if (localStorage.getItem(AUTH_KEY) === '1') {
-  // Ladeindikator zeigen statt falscher Reihenfolge
-  const grid = document.getElementById('galleryGrid');
-  if (grid) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);font-size:.85rem">Galerie wird geladen…</div>';
-  }
+  initApp();
+}
   loadGalleryFromGitHub();
 }
 
