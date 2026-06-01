@@ -1,11 +1,17 @@
 /* ===== PASSWORT ===== */
-const APP_PASSWORD = 'barbara2024';
+const APP_PASSWORD_HASH = 'bef599fdc77300324c38dc150d9caf8859087aae59e6837973f0a531b51a139b';
 const AUTH_KEY = 'bf_auth';
 
-function checkPassword() {
+async function hashPassword(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword() {
   const input = document.getElementById('passwordInput');
   const val = input?.value || '';
-  if (val === APP_PASSWORD) {
+  const hash = await hashPassword(val);
+  if (hash === APP_PASSWORD_HASH) {
     localStorage.setItem(AUTH_KEY, '1');
     document.getElementById('passwordScreen').style.display = 'none';
     initApp();
