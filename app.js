@@ -162,48 +162,48 @@ const OWNER = 'steirergeorg-create';
 const REPO  = 'barbara-friehs-website';
 
 const KNOWN_BILDER = [
-  { name:'magick.jpg',                      titel:'Magick',                      technik:'oil on canvas',    jahr:'2024', groesse:'120×80 cm'  },
-  { name:'Fiddle leaf fig.jpg',             titel:'Fiddle Leaf Fig',             technik:'oil on canvas',    jahr:'2026', groesse:'40×40 cm'   },
-  { name:'liecken.jpg',                     titel:'Liecken',                     technik:'acrylic on canvas',jahr:'2021', groesse:'50×60 cm'   },
-  { name:'room in Milan.jpg',               titel:'Room in Milán',               technik:'acrylic on canvas',jahr:'2024', groesse:'40×50 cm'   },
-  { name:'pears and tea.jpg',               titel:'Pears and Tea',               technik:'acrylic on canvas',jahr:'2021', groesse:'40×50 cm'   },
-  { name:'books.jpg',                       titel:'Books',                       technik:'oil on canvas',    jahr:'2025', groesse:'40×40 cm'   },
-  { name:'Anna Theke by herself.jpg',       titel:'Anna Theke by Herself',       technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
-  { name:'beaten down the path.jpg',        titel:'Beaten Down the Path',        technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
-  { name:'bridge in greece.jpg',            titel:'Bridge in Greece',            technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
-  { name:'cactus love.jpg',                 titel:'Cactus Love',                 technik:'acrylic on canvas',jahr:'2025', groesse:'20×30 cm'   },
-  { name:'cat in a box.jpg',                titel:'Cat in a Box',                technik:'acrylic on canvas',jahr:'2020', groesse:'40×30 cm'   },
-  { name:'chickens.jpg',                    titel:'Chickens',                    technik:'acrylic on canvas',jahr:'2025', groesse:'30×40 cm'   },
-  { name:'christmas cactus.jpg',            titel:'Christmas Cactus',            technik:'acrylic on canvas',jahr:'2020', groesse:'18×24 cm'   },
-  { name:'cococunt blood orange.jpg',       titel:'Coconut Blood Orange',        technik:'acrylic on canvas',jahr:'2021', groesse:'30×40 cm'   },
-  { name:'diving on the Seychelles.jpg',    titel:'Diving on the Seychelles',    technik:'oil on canvas',    jahr:'2026', groesse:'60×80 cm'   },
-  { name:'fluffy cat.jpg',                  titel:'Fluffy Cat',                  technik:'acrylic on canvas',jahr:'2025', groesse:'30×40 cm'   },
-  { name:'Goethes Faust.jpg',               titel:"Goethe's Faust",              technik:'oil on canvas',    jahr:'2025', groesse:'100×100 cm' },
-  { name:'In the deserts of San Diego.jpg', titel:'In the Deserts of San Diego', technik:'oil on canvas',    jahr:'2026', groesse:'50×100 cm'  },
-  { name:'In the shadows.jpg',              titel:'In the Shadows',              technik:'oil on canvas',    jahr:'2025', groesse:'50×60 cm'   },
-  { name:'in the sunshine.jpg',             titel:'In the Sunshine',             technik:'oil on canvas',    jahr:'2026', groesse:'50×70 cm'   },
-  { name:'look on me.jpg',                  titel:'Look on Me',                  technik:'oil on canvas',    jahr:'2024', groesse:'50×60 cm'   },
-  { name:'looking ahead.jpg',               titel:'Looking Ahead',               technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
-  { name:'Opulence and common ground.jpg',  titel:'Opulence and Common Ground',  technik:'acrylic on canvas',jahr:'2025', groesse:'50×70 cm'   },
-  { name:'plantains and oranges.jpg',       titel:'Plantains and Oranges',       technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
-  { name:'province in france.jpg',          titel:'Province in France',          technik:'acrylic on canvas',jahr:'2024', groesse:'30×40 cm'   },
-  { name:'Room at the Baltic sea.jpg',      titel:'Room at the Baltic Sea',      technik:'acrylic on canvas',jahr:'2025', groesse:'80×80 cm'   },
-  { name:'room in paris.jpg',               titel:'Room in Paris',               technik:'acrylic on canvas',jahr:'2025', groesse:'80×100 cm'  },
-  { name:'Room in Utah.jpg',                titel:'Room in Utah',                technik:'acrylic on canvas',jahr:'2025', groesse:'40×60 cm'   },
-  { name:'room in venice.jpg',              titel:'Room in Venice',              technik:'acrylic on canvas',jahr:'2024', groesse:'40×60 cm'   },
-  { name:'section of a forest.jpg',         titel:'Section of a Forest',         technik:'oil on canvas',    jahr:'2025', groesse:'30×90 cm'   },
-  { name:'selfportrait with a cat.jpg',     titel:'Self-Portrait with a Cat',    technik:'oil on canvas',    jahr:'2025', groesse:'140×100 cm' },
-  { name:'spring is around the corner.jpg', titel:'Spring Is Around the Corner', technik:'oil on canvas',    jahr:'2026', groesse:'50×70 cm'   },
-  { name:'still live number four.jpg',      titel:'Still Life No. 4',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
-  { name:'still live number one.jpg',       titel:'Still Life No. 1',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
-  { name:'still live number three.jpg',     titel:'Still Life No. 3',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×30 cm'   },
-  { name:'still live number two.jpg',       titel:'Still Life No. 2',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
-  { name:'succulents in the sunset.jpg',    titel:'Succulents in the Sunset',    technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
-  { name:'sunflowers.jpg',                  titel:'Sunflowers',                  technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
-  { name:'tamed jimmy hendrix.jpg',         titel:'Tamed Jimi Hendrix',          technik:'oil on canvas',    jahr:'2024', groesse:'50×60 cm'   },
-  { name:'upwards.jpg',                     titel:'Upwards',                     technik:'acrylic on canvas',jahr:'2025', groesse:'40×50 cm'   },
-  { name:'visiting the market.jpg',         titel:'Visiting the Market',         technik:'acrylic on canvas',jahr:'2023', groesse:'60×80 cm'   },
-  { name:'waiting for the bus.jpg',         titel:'Waiting for the Bus',         technik:'acrylic on canvas',jahr:'2024', groesse:'50×70 cm'   },
+  { name:'barbara-friehs-magick-oil-painting-graz.webp',                          titel:'Magick',                      technik:'oil on canvas',    jahr:'2024', groesse:'120×80 cm'  },
+  { name:'barbara-friehs-fiddle-leaf-fig-oil-painting-graz.webp',                 titel:'Fiddle Leaf Fig',             technik:'oil on canvas',    jahr:'2026', groesse:'40×40 cm'   },
+  { name:'barbara-friehs-liecken-acrylic-painting-graz.webp',                     titel:'Liecken',                     technik:'acrylic on canvas',jahr:'2021', groesse:'50×60 cm'   },
+  { name:'barbara-friehs-room-in-milan-acrylic-painting-graz.webp',               titel:'Room in Milán',               technik:'acrylic on canvas',jahr:'2024', groesse:'40×50 cm'   },
+  { name:'barbara-friehs-pears-and-tea-acrylic-painting-graz.webp',               titel:'Pears and Tea',               technik:'acrylic on canvas',jahr:'2021', groesse:'40×50 cm'   },
+  { name:'barbara-friehs-books-oil-painting-graz.webp',                           titel:'Books',                       technik:'oil on canvas',    jahr:'2025', groesse:'40×40 cm'   },
+  { name:'barbara-friehs-anna-theke-by-herself-acrylic-painting-graz.webp',       titel:'Anna Theke by Herself',       technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
+  { name:'barbara-friehs-beaten-down-the-path-acrylic-painting-graz.webp',        titel:'Beaten Down the Path',        technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
+  { name:'barbara-friehs-bridge-in-greece-acrylic-painting-graz.webp',            titel:'Bridge in Greece',            technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
+  { name:'barbara-friehs-cactus-love-acrylic-painting-graz.webp',                 titel:'Cactus Love',                 technik:'acrylic on canvas',jahr:'2025', groesse:'20×30 cm'   },
+  { name:'barbara-friehs-cat-in-a-box-acrylic-painting-graz.webp',                titel:'Cat in a Box',                technik:'acrylic on canvas',jahr:'2020', groesse:'40×30 cm'   },
+  { name:'barbara-friehs-chickens-acrylic-painting-graz.webp',                    titel:'Chickens',                    technik:'acrylic on canvas',jahr:'2025', groesse:'30×40 cm'   },
+  { name:'barbara-friehs-christmas-cactus-acrylic-painting-graz.webp',            titel:'Christmas Cactus',            technik:'acrylic on canvas',jahr:'2020', groesse:'18×24 cm'   },
+  { name:'barbara-friehs-coconut-blood-orange-acrylic-painting-graz.webp',        titel:'Coconut Blood Orange',        technik:'acrylic on canvas',jahr:'2021', groesse:'30×40 cm'   },
+  { name:'barbara-friehs-diving-on-the-seychelles-oil-painting-graz.webp',        titel:'Diving on the Seychelles',    technik:'oil on canvas',    jahr:'2026', groesse:'60×80 cm'   },
+  { name:'barbara-friehs-fluffy-cat-acrylic-painting-graz.webp',                  titel:'Fluffy Cat',                  technik:'acrylic on canvas',jahr:'2025', groesse:'30×40 cm'   },
+  { name:'barbara-friehs-goethes-faust-oil-painting-graz.webp',                   titel:"Goethe's Faust",              technik:'oil on canvas',    jahr:'2025', groesse:'100×100 cm' },
+  { name:'barbara-friehs-in-the-deserts-of-san-diego-oil-painting-graz.webp',     titel:'In the Deserts of San Diego', technik:'oil on canvas',    jahr:'2026', groesse:'50×100 cm'  },
+  { name:'barbara-friehs-in-the-shadows-oil-painting-graz.webp',                  titel:'In the Shadows',              technik:'oil on canvas',    jahr:'2025', groesse:'50×60 cm'   },
+  { name:'barbara-friehs-in-the-sunshine-oil-painting-graz.webp',                 titel:'In the Sunshine',             technik:'oil on canvas',    jahr:'2026', groesse:'50×70 cm'   },
+  { name:'barbara-friehs-look-on-me-oil-painting-graz.webp',                      titel:'Look on Me',                  technik:'oil on canvas',    jahr:'2024', groesse:'50×60 cm'   },
+  { name:'barbara-friehs-looking-ahead-acrylic-painting-graz.webp',               titel:'Looking Ahead',               technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
+  { name:'barbara-friehs-opulence-and-common-ground-acrylic-painting-graz.webp',  titel:'Opulence and Common Ground',  technik:'acrylic on canvas',jahr:'2025', groesse:'50×70 cm'   },
+  { name:'barbara-friehs-plantains-and-oranges-acrylic-painting-graz.webp',       titel:'Plantains and Oranges',       technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
+  { name:'barbara-friehs-province-in-france-acrylic-painting-graz.webp',          titel:'Province in France',          technik:'acrylic on canvas',jahr:'2024', groesse:'30×40 cm'   },
+  { name:'barbara-friehs-room-at-the-baltic-sea-acrylic-painting-graz.webp',      titel:'Room at the Baltic Sea',      technik:'acrylic on canvas',jahr:'2025', groesse:'80×80 cm'   },
+  { name:'barbara-friehs-room-in-paris-acrylic-painting-graz.webp',               titel:'Room in Paris',               technik:'acrylic on canvas',jahr:'2025', groesse:'80×100 cm'  },
+  { name:'barbara-friehs-room-in-utah-acrylic-painting-graz.webp',                titel:'Room in Utah',                technik:'acrylic on canvas',jahr:'2025', groesse:'40×60 cm'   },
+  { name:'barbara-friehs-room-in-venice-acrylic-painting-graz.webp',              titel:'Room in Venice',              technik:'acrylic on canvas',jahr:'2024', groesse:'40×60 cm'   },
+  { name:'barbara-friehs-section-of-a-forest-oil-painting-graz.webp',             titel:'Section of a Forest',         technik:'oil on canvas',    jahr:'2025', groesse:'30×90 cm'   },
+  { name:'barbara-friehs-selfportrait-with-a-cat-oil-painting-graz.webp',         titel:'Self-Portrait with a Cat',    technik:'oil on canvas',    jahr:'2025', groesse:'140×100 cm' },
+  { name:'barbara-friehs-spring-is-around-the-corner-oil-painting-graz.webp',     titel:'Spring Is Around the Corner', technik:'oil on canvas',    jahr:'2026', groesse:'50×70 cm'   },
+  { name:'barbara-friehs-still-life-number-four-acrylic-painting-graz.webp',      titel:'Still Life No. 4',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
+  { name:'barbara-friehs-still-life-number-one-acrylic-painting-graz.webp',       titel:'Still Life No. 1',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
+  { name:'barbara-friehs-still-life-number-three-acrylic-painting-graz.webp',     titel:'Still Life No. 3',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×30 cm'   },
+  { name:'barbara-friehs-still-life-number-two-acrylic-painting-graz.webp',       titel:'Still Life No. 2',            technik:'acrylic on canvas',jahr:'2026', groesse:'30×40 cm'   },
+  { name:'barbara-friehs-succulents-in-the-sunset-acrylic-painting-graz.webp',    titel:'Succulents in the Sunset',    technik:'acrylic on canvas',jahr:'2021', groesse:'40×40 cm'   },
+  { name:'barbara-friehs-sunflowers-acrylic-painting-graz.webp',                  titel:'Sunflowers',                  technik:'acrylic on canvas',jahr:'2024', groesse:'60×80 cm'   },
+  { name:'barbara-friehs-tamed-jimi-hendrix-oil-painting-graz.webp',              titel:'Tamed Jimi Hendrix',          technik:'oil on canvas',    jahr:'2024', groesse:'50×60 cm'   },
+  { name:'barbara-friehs-upwards-acrylic-painting-graz.webp',                     titel:'Upwards',                     technik:'acrylic on canvas',jahr:'2025', groesse:'40×50 cm'   },
+  { name:'barbara-friehs-visiting-the-market-acrylic-painting-graz.webp',         titel:'Visiting the Market',         technik:'acrylic on canvas',jahr:'2023', groesse:'60×80 cm'   },
+  { name:'barbara-friehs-waiting-for-the-bus-acrylic-painting-graz.webp',         titel:'Waiting for the Bus',         technik:'acrylic on canvas',jahr:'2024', groesse:'50×70 cm'   },
 ];
 
 let ALL_GALLERY_ITEMS = [];
@@ -219,7 +219,33 @@ function getTechLabel(t) {
 // Pending uploads die beim Publizieren hochgeladen werden
 const pendingUploads = [];
 
-function addImageToGallery(file, info = {}) {
+function makeSeoFilename(titel, technik) {
+  const slug = titel
+    .toLowerCase()
+    .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const medium = (technik || '').includes('oil') ? 'oil' : 'acrylic';
+  return `barbara-friehs-${slug}-${medium}-painting-graz.webp`;
+}
+
+function convertToWebP(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      const webpDataUrl = canvas.toDataURL('image/webp', 0.82);
+      const base64 = webpDataUrl.split(',')[1];
+      resolve({ dataUrl: webpDataUrl, base64, width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = dataUrl;
+  });
+}
+
+async function addImageToGallery(file, info = {}) {
   const grid    = document.getElementById('galleryGrid');
   const name    = info.titel    || file.name.replace(/\.[^.]+$/, '');
   const technik = info.technik  || 'acrylic on canvas';
@@ -227,17 +253,13 @@ function addImageToGallery(file, info = {}) {
   const groesse = info.groesse  || '';
   const meta    = [getTechLabel(technik), jahr, groesse].filter(Boolean).join(' · ');
 
-  // Bildabmessungen auslesen
-  const img = new Image();
-  img.src = file.dataUrl;
-  img.onload = () => {
-    const pu = pendingUploads.find(p => p.name === file.name);
-    if (pu) { pu.width = img.naturalWidth; pu.height = img.naturalHeight; }
-  };
+  // SEO-Dateiname generieren und in WebP konvertieren
+  const seoName = makeSeoFilename(name, technik);
+  const { dataUrl, base64, width, height } = await convertToWebP(file.dataUrl);
 
-  pendingUploads.push({ ...file, titel: name, technik, jahr, groesse, width: 0, height: 0 });
+  pendingUploads.push({ name: seoName, dataUrl, base64, mime: 'image/webp', titel: name, technik, jahr, groesse, width, height });
 
-  const item = makeGalleryItem({ name: file.name, titel: name, technik, jahr, groesse, dataUrl: file.dataUrl, isNew: true });
+  const item = makeGalleryItem({ name: seoName, titel: name, technik, jahr, groesse, dataUrl, isNew: true });
   const first = grid.querySelector('.gallery-item');
   if (first) grid.insertBefore(item, first);
   else grid.appendChild(item);
