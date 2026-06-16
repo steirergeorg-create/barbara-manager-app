@@ -953,6 +953,35 @@ async function startPublish() {
       }
     } catch(e) { addLog('⚠ Texte übersprungen: ' + e.message, 'var(--accent)'); }
 
+    // Schritt 4b: Deutsche Seite de/index.html aktualisieren
+    addLog('→ Deutsche Seite wird aktualisiert...');
+    const deAPI = `https://api.github.com/repos/${OWNER}/${REPO}/contents/de/index.html`;
+    try {
+      const deRes = await fetch(deAPI, { headers: HEADERS });
+      if (deRes.ok) {
+        const deFile = await deRes.json();
+        const deBinary = atob(deFile.content.replace(/\n/g, ''));
+        const deBytes = new Uint8Array(deBinary.length);
+        for (let i = 0; i < deBinary.length; i++) deBytes[i] = deBinary.charCodeAt(i);
+        let deHtml = new TextDecoder('utf-8').decode(deBytes);
+        deHtml = applyChangesToHTMLDE(deHtml);
+        const encDE = new TextEncoder();
+        const encodedDE = encDE.encode(deHtml);
+        let binaryDE = '';
+        encodedDE.forEach(b => binaryDE += String.fromCharCode(b));
+        const dePut = await fetch(deAPI, {
+          method: 'PUT', headers: HEADERS,
+          body: JSON.stringify({
+            message: 'Update German page texts via Barbara Manager',
+            content: btoa(binaryDE),
+            sha: deFile.sha
+          })
+        });
+        if (dePut.ok) addLog('✓ Deutsche Seite gespeichert');
+        else addLog('⚠ Deutsche Seite konnte nicht gespeichert werden', 'var(--accent)');
+      }
+    } catch(e) { addLog('⚠ Deutsche Seite übersprungen: ' + e.message, 'var(--accent)'); }
+
     fill.style.width = '90%';
     addLog('→ Cloudflare deployed automatisch...');
     await new Promise(r => setTimeout(r, 1500));
@@ -986,7 +1015,12 @@ async function startPublish() {
 /* Texte lokal zwischenspeichern */
 const TEXTE_KEY = 'bf_texte';
 function saveTexteLocal() {
-  const data = getTexteValues();
+  const de = getTexteValuesDE();
+  const data = { ...getTexteValues(),
+    de_standort: de.standort, de_tagline1: de.tagline1, de_tagline2: de.tagline2,
+    de_beschreibung: de.beschreibung, de_ueber_titel: de.ueber_titel,
+    de_ueber_text1: de.ueber_text1, de_ueber_text2: de.ueber_text2,
+  };
   localStorage.setItem(TEXTE_KEY, JSON.stringify(data));
   addActivity('✏️', 'text', 'Texte gespeichert', 'Werden beim nächsten Publizieren übernommen');
   updatePendingChanges();
@@ -1007,6 +1041,17 @@ function getTexteValues() {
     linkedin:    document.getElementById('txt-linkedin')?.value    || '',
   };
 }
+function getTexteValuesDE() {
+  return {
+    standort:    document.getElementById('txt-de-standort')?.value    || 'Graz, Österreich',
+    tagline1:    document.getElementById('txt-de-tagline1')?.value    || 'Malen',
+    tagline2:    document.getElementById('txt-de-tagline2')?.value    || 'mit Leidenschaft',
+    beschreibung:document.getElementById('txt-de-beschreibung')?.value|| '',
+    ueber_titel: document.getElementById('txt-de-ueber-titel')?.value || '',
+    ueber_text1: document.getElementById('txt-de-ueber1')?.value      || '',
+    ueber_text2: document.getElementById('txt-de-ueber2')?.value      || '',
+  };
+}
 function loadTexteLocal() {
   try {
     const saved = JSON.parse(localStorage.getItem(TEXTE_KEY) || 'null');
@@ -1018,6 +1063,10 @@ function loadTexteLocal() {
       'txt-ueber1': saved.ueber_text1, 'txt-ueber2': saved.ueber_text2,
       'txt-email': saved.email, 'txt-instagram': saved.instagram,
       'txt-linkedin': saved.linkedin,
+      'txt-de-standort': saved.de_standort, 'txt-de-tagline1': saved.de_tagline1,
+      'txt-de-tagline2': saved.de_tagline2, 'txt-de-beschreibung': saved.de_beschreibung,
+      'txt-de-ueber-titel': saved.de_ueber_titel, 'txt-de-ueber1': saved.de_ueber_text1,
+      'txt-de-ueber2': saved.de_ueber_text2,
     }).forEach(([id, val]) => {
       const el = document.getElementById(id);
       if (el && val) el.value = val;
@@ -1025,6 +1074,43 @@ function loadTexteLocal() {
   } catch(e) {}
 }
 loadTexteLocal();
+
+/* Änderungen in die deutsche de/index.html einarbeiten */
+function applyChangesToHTMLDE(html) {
+  const t = getTexteValuesDE();
+  const esc = s => (s||'').replace(/"/g, '&quot;');
+  const escHtml = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  try {
+    html = html.replace(/standort:\s*"[^"]*"/,     `standort:     "${esc(t.standort)}"`);
+    html = html.replace(/tagline1:\s*"[^"]*"/,     `tagline1:     "${esc(t.tagline1)}"`);
+    html = html.replace(/tagline2:\s*"[^"]*"/,     `tagline2:     "${esc(t.tagline2)}"`);
+    html = html.replace(/beschreibung:\s*"[^"]*"/, `beschreibung: "${esc(t.beschreibung)}"`);
+    html = html.replace(/ueber_titel:\s*"[^"]*"/,  `ueber_titel:  "${esc(t.ueber_titel)}"`);
+    html = html.replace(/ueber_text1:\s*"[^"]*"/,  `ueber_text1:  "${esc(t.ueber_text1)}"`);
+    html = html.replace(/ueber_text2:\s*"[^"]*"/,  `ueber_text2:  "${esc(t.ueber_text2)}"`);
+    html = html.replace(
+      /(<p class="hero-eyebrow" id="hero-eyebrow">)[^<]*/,
+      `$1${escHtml(t.tagline1)} · ${escHtml(t.standort)}`
+    );
+    html = html.replace(
+      /(<h1 class="hero-title" id="hero-title">)[^<]*<br><em>[^<]*<\/em>/,
+      `$1${escHtml(t.tagline1)}<br><em>${escHtml(t.tagline2)}</em>`
+    );
+    html = html.replace(
+      /(<p class="hero-desc" id="hero-desc">)[^<]*/,
+      `$1${escHtml(t.beschreibung)}`
+    );
+    const aboutWords = (t.ueber_titel||'').trim().split(' ');
+    const aboutLast = aboutWords.pop();
+    html = html.replace(
+      /(<h2 id="about-title">).*?(<\/h2>)/s,
+      `$1${escHtml(aboutWords.join(' '))} <em>${escHtml(aboutLast)}</em>$2`
+    );
+    html = html.replace(/(<p id="about-p1">)[^<]*/, `$1${escHtml(t.ueber_text1)}`);
+    html = html.replace(/(<p id="about-p2">)[^<]*/, `$1${escHtml(t.ueber_text2)}`);
+  } catch(e) { console.log('applyChangesToHTMLDE Fehler:', e); }
+  return html;
+}
 
 /* Änderungen in die Website index.html einarbeiten */
 function applyChangesToHTML(html) {
