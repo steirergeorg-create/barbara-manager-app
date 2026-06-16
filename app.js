@@ -1043,6 +1043,34 @@ function applyChangesToHTML(html) {
     html = html.replace(/instagram_handle:\s*"[^"]*"/, `instagram_handle: "${esc(t.instagram)}"`);
     html = html.replace(/instagram:\s*"[^"]*"/,    `instagram:    "https://instagram.com/${esc(t.instagram)}"`);
     html = html.replace(/linkedin:\s*"[^"]*"/,     `linkedin:     "${esc(t.linkedin)}"`);
+    // Statische SEO-Texte im HTML-Body aktualisieren
+    const escHtml = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    html = html.replace(
+      /(<p class="hero-eyebrow" id="hero-eyebrow">)[^<]*/,
+      `$1${escHtml(t.tagline1)} · ${escHtml(t.standort)}`
+    );
+    html = html.replace(
+      /(<h1 class="hero-title" id="hero-title">)[^<]*<br><em>[^<]*<\/em>/,
+      `$1${escHtml(t.tagline1)}<br><em>${escHtml(t.tagline2)}</em>`
+    );
+    html = html.replace(
+      /(<p class="hero-desc" id="hero-desc">)[^<]*/,
+      `$1${escHtml(t.beschreibung)}`
+    );
+    const aboutWords = (t.ueber_titel||'').trim().split(' ');
+    const aboutLast = aboutWords.pop();
+    html = html.replace(
+      /(<h2 id="about-title">).*?(<\/h2>)/s,
+      `$1${escHtml(aboutWords.join(' '))} <em>${escHtml(aboutLast)}</em>$2`
+    );
+    html = html.replace(
+      /(<p id="about-p1">)[^<]*/,
+      `$1${escHtml(t.ueber_text1)}`
+    );
+    html = html.replace(
+      /(<p id="about-p2">)[^<]*/,
+      `$1${escHtml(t.ueber_text2)}`
+    );
   } catch(e) { console.log('applyChangesToHTML Fehler:', e); }
   return html;
 }
