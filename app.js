@@ -579,7 +579,9 @@ if (localStorage.getItem(AUTH_KEY) === '1') {
   if (grid) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);font-size:.85rem">Galerie wird geladen…</div>';
   }
-  loadGalleryFromGitHub();
+  // Erst laden, wenn das ganze Script initialisiert ist (getToken braucht STORAGE_KEY,
+  // das weiter unten definiert wird – ein direkter Aufruf hier schlug immer still fehl)
+  setTimeout(() => loadGalleryFromGitHub(), 0);
 }
 
 /* ===== AUSSTEHENDE ÄNDERUNGEN ===== */
@@ -761,7 +763,29 @@ function updateDashboard() {
 
 // Dashboard aktualisieren wenn Galerie-Tab geöffnet wird
 
-/* ===== ECHTE GITHUB PUBLISH FUNKTION ===== */
+/* ===== GITHUB HILFSFUNKTIONEN ===== */
+function b64ToUtf8(b64) {
+  const bin = atob(b64.replace(/\n/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+async function ghJson(url, headers, opts = {}) {
+  const res = await fetch(url, { ...opts, headers });
+  if (!res.ok) {
+    let msg = '';
+    try { msg = (await res.json()).message || ''; } catch(e) {}
+    const err = new Error(`GitHub ${res.status}${msg ? ' – ' + msg : ''}`);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+/* ===== ECHTE GITHUB PUBLISH FUNKTION =====
+   Alle Änderungen (Bilder, config.json, index.html, de/index.html) werden in
+   EINEM Commit gespeichert. Dadurch baut Cloudflare die Seite nur einmal neu. */
 async function startPublish() {
   const token = getToken();
   if (!token) {
@@ -806,27 +830,29 @@ async function startPublish() {
     addLog('→ Verbinde mit GitHub...');
     fill.style.width = '20%';
 
-    // Schritt 1: Aktuelle config.json von GitHub holen
+    const API    = `https://api.github.com/repos/${OWNER}/${REPO}`;
+    const BRANCH = 'main';
+    const treeEntries = [];   // alle Dateien für den einen Commit
+    const summary = [];       // für die Commit-Nachricht
+
+    // Schritt 1: Aktuellen Stand (Commit + Baum) holen
+    addLog('→ Lade aktuellen Stand der Website...');
+    const ref = await ghJson(`${API}/git/ref/heads/${BRANCH}`, HEADERS);
+    const baseCommitSha = ref.object.sha;
+    const baseCommit = await ghJson(`${API}/git/commits/${baseCommitSha}`, HEADERS);
+    const baseTreeSha = baseCommit.tree.sha;
+
+    // Aktuelle config.json genau aus diesem Stand laden
     addLog('→ Lade aktuelle Bilderliste...');
-    const configAPI = `https://api.github.com/repos/${OWNER}/${REPO}/contents/config.json`;
-    let configSha = null;
     let configData = { bilder: [] };
     try {
-      const configRes = await fetch(configAPI, { headers: HEADERS });
-      if (configRes.ok) {
-        const configFile = await configRes.json();
-        configSha = configFile.sha;
-        const base64c = configFile.content.replace(/\n/g, '');
-        const binaryc = atob(base64c);
-        const bytesc = new Uint8Array(binaryc.length);
-        for (let i = 0; i < binaryc.length; i++) bytesc[i] = binaryc.charCodeAt(i);
-        configData = JSON.parse(new TextDecoder('utf-8').decode(bytesc));
-        if (!Array.isArray(configData.bilder)) configData.bilder = [];
-      } else if (configRes.status !== 404) {
-        throw new Error('Bilderliste konnte nicht geladen werden (GitHub ' + configRes.status + ')');
-      }
+      const configFile = await ghJson(`${API}/contents/config.json?ref=${baseCommitSha}`, HEADERS);
+      configData = JSON.parse(b64ToUtf8(configFile.content));
+      if (!Array.isArray(configData.bilder)) configData.bilder = [];
     } catch(e) {
-      throw new Error('Bilderliste konnte nicht geladen werden – Publizieren abgebrochen. ' + (e.message || ''));
+      if (e.status !== 404) {
+        throw new Error('Bilderliste konnte nicht geladen werden – Publizieren abgebrochen. ' + (e.message || ''));
+      }
     }
     fill.style.width = '30%';
 
@@ -835,16 +861,16 @@ async function startPublish() {
       addLog(`→ ${pendingUploads.length} neue Bild(er) werden hochgeladen...`);
       let uploaded = 0;
       for (const img of pendingUploads) {
-        const imgAPI = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(img.name)}`;
-        let imgSha = null;
+        let blob = null;
         try {
-          const checkRes = await fetch(imgAPI, { headers: HEADERS });
-          if (checkRes.ok) { const ex = await checkRes.json(); imgSha = ex.sha; }
-        } catch(e) {}
-        const body = { message: `Add image: ${img.name}`, content: img.base64 };
-        if (imgSha) body.sha = imgSha;
-        const res = await fetch(imgAPI, { method:'PUT', headers: HEADERS, body: JSON.stringify(body) });
-        if (res.ok) {
+          blob = await ghJson(`${API}/git/blobs`, HEADERS, {
+            method: 'POST',
+            body: JSON.stringify({ content: img.base64, encoding: 'base64' })
+          });
+        } catch(e) { addLog(`  ✗ ${img.name}: ${e.message}`, 'var(--red)'); }
+        if (blob) {
+          treeEntries.push({ path: img.name, mode: '100644', type: 'blob', sha: blob.sha });
+          summary.push(`Bild ${img.name}`);
           addLog(`  ✓ ${img.name}`);
           uploaded++;
           // Zur config hinzufügen
@@ -860,8 +886,6 @@ async function startPublish() {
               sold:    false
             });
           }
-        } else {
-          addLog(`  ✗ ${img.name} fehlgeschlagen`, 'var(--red)');
         }
         fill.style.width = (30 + (uploaded / pendingUploads.length) * 40) + '%';
       }
@@ -957,82 +981,61 @@ async function startPublish() {
       }
     });
 
-    // Schritt 3: config.json auf GitHub speichern
-    addLog('→ Bilderliste wird gespeichert...');
-    // btoa() kann mit Unicode (00d7, 00e4, 00f6 etc.) nicht umgehen 2192 UTF-8 Encoding n00f6tig
-    const configJson = JSON.stringify(configData, null, 2);
-    const configContent = btoa(unescape(encodeURIComponent(configJson)));
-    const configBody = {
-      message: 'Update config.json via Barbara Manager',
-      content: configContent
-    };
-    if (configSha) configBody.sha = configSha;
-    const configPut = await fetch(configAPI, {
-      method: 'PUT', headers: HEADERS,
-      body: JSON.stringify(configBody)
+    // Schritt 3: config.json in den Commit aufnehmen
+    addLog('→ Bilderliste wird vorbereitet...');
+    treeEntries.push({ path: 'config.json', mode: '100644', type: 'blob', content: JSON.stringify(configData, null, 2) });
+    summary.push('Galerie');
+
+    // Schritt 4: Texte in index.html und de/index.html einarbeiten (nur wenn geändert)
+    addLog('→ Website-Texte werden vorbereitet...');
+    fill.style.width = '80%';
+    const htmlFiles = [
+      { path: 'index.html',    apply: applyChangesToHTML,   label: 'Texte EN' },
+      { path: 'de/index.html', apply: applyChangesToHTMLDE, label: 'Texte DE' },
+    ];
+    for (const f of htmlFiles) {
+      try {
+        const file = await ghJson(`${API}/contents/${f.path}?ref=${baseCommitSha}`, HEADERS);
+        const oldHtml = b64ToUtf8(file.content);
+        const newHtml = f.apply(oldHtml);
+        if (newHtml !== oldHtml) {
+          treeEntries.push({ path: f.path, mode: '100644', type: 'blob', content: newHtml });
+          summary.push(f.label);
+        }
+      } catch(e) { addLog(`⚠ ${f.label} übersprungen: ${e.message}`, 'var(--accent)'); }
+    }
+
+    // Schritt 5: Alles in EINEM Commit speichern
+    addLog('→ Änderungen werden gespeichert (1 Commit)...');
+    fill.style.width = '85%';
+    const newTree = await ghJson(`${API}/git/trees`, HEADERS, {
+      method: 'POST',
+      body: JSON.stringify({ base_tree: baseTreeSha, tree: treeEntries })
     });
-    if (configPut.ok) addLog('✓ Bilderliste gespeichert');
-    else addLog('✗ config.json Fehler', 'var(--red)');
-
-    // Schritt 4: Website index.html holen, Texte einarbeiten, zurückspeichern
-    addLog('→ Website-Texte werden aktualisiert...');
-    fill.style.width = '82%';
-    const indexAPI = `https://api.github.com/repos/${OWNER}/${REPO}/contents/index.html`;
-    try {
-      const indexRes = await fetch(indexAPI, { headers: HEADERS });
-      if (indexRes.ok) {
-        const indexFile = await indexRes.json();
-        const indexBinary = atob(indexFile.content.replace(/\n/g, ''));
-        const indexBytes = new Uint8Array(indexBinary.length);
-        for (let i = 0; i < indexBinary.length; i++) indexBytes[i] = indexBinary.charCodeAt(i);
-        let indexHtml = new TextDecoder('utf-8').decode(indexBytes);
-        indexHtml = applyChangesToHTML(indexHtml);
-        const encoder = new TextEncoder();
-        const encoded = encoder.encode(indexHtml);
-        let binary = '';
-        encoded.forEach(b => binary += String.fromCharCode(b));
-        const indexContent = btoa(binary);
-        const indexPut = await fetch(indexAPI, {
-          method: 'PUT', headers: HEADERS,
-          body: JSON.stringify({
-            message: 'Update website texts via Barbara Manager',
-            content: indexContent,
-            sha: indexFile.sha
-          })
+    if (newTree.sha === baseTreeSha) {
+      addLog('✓ Keine Änderungen – nichts zu publizieren');
+    } else {
+      const commit = await ghJson(`${API}/git/commits`, HEADERS, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: 'Publiziert via Barbara Manager: ' + summary.join(', '),
+          tree: newTree.sha,
+          parents: [baseCommitSha]
+        })
+      });
+      try {
+        await ghJson(`${API}/git/refs/heads/${BRANCH}`, HEADERS, {
+          method: 'PATCH',
+          body: JSON.stringify({ sha: commit.sha, force: false })
         });
-        if (indexPut.ok) addLog('✓ Website-Texte gespeichert');
-        else addLog('⚠ Texte konnten nicht gespeichert werden', 'var(--accent)');
+      } catch(e) {
+        if (e.status === 422) {
+          throw new Error('Die Website wurde zwischenzeitlich woanders geändert. Bitte App neu laden und nochmal publizieren.');
+        }
+        throw e;
       }
-    } catch(e) { addLog('⚠ Texte übersprungen: ' + e.message, 'var(--accent)'); }
-
-    // Schritt 4b: Deutsche Seite de/index.html aktualisieren
-    addLog('→ Deutsche Seite wird aktualisiert...');
-    const deAPI = `https://api.github.com/repos/${OWNER}/${REPO}/contents/de/index.html`;
-    try {
-      const deRes = await fetch(deAPI, { headers: HEADERS });
-      if (deRes.ok) {
-        const deFile = await deRes.json();
-        const deBinary = atob(deFile.content.replace(/\n/g, ''));
-        const deBytes = new Uint8Array(deBinary.length);
-        for (let i = 0; i < deBinary.length; i++) deBytes[i] = deBinary.charCodeAt(i);
-        let deHtml = new TextDecoder('utf-8').decode(deBytes);
-        deHtml = applyChangesToHTMLDE(deHtml);
-        const encDE = new TextEncoder();
-        const encodedDE = encDE.encode(deHtml);
-        let binaryDE = '';
-        encodedDE.forEach(b => binaryDE += String.fromCharCode(b));
-        const dePut = await fetch(deAPI, {
-          method: 'PUT', headers: HEADERS,
-          body: JSON.stringify({
-            message: 'Update German page texts via Barbara Manager',
-            content: btoa(binaryDE),
-            sha: deFile.sha
-          })
-        });
-        if (dePut.ok) addLog('✓ Deutsche Seite gespeichert');
-        else addLog('⚠ Deutsche Seite konnte nicht gespeichert werden', 'var(--accent)');
-      }
-    } catch(e) { addLog('⚠ Deutsche Seite übersprungen: ' + e.message, 'var(--accent)'); }
+      addLog('✓ Alles in einem Commit gespeichert');
+    }
 
     fill.style.width = '90%';
     addLog('→ Cloudflare deployed automatisch...');
