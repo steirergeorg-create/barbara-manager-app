@@ -1,4 +1,4 @@
-const CACHE = 'bf-manager-v4';
+const CACHE = 'bf-manager-v5';
 const ASSETS = ['/', '/index.html'];
 
 self.addEventListener('install', e => {

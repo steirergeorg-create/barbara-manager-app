@@ -835,6 +835,19 @@ async function startPublish() {
     const treeEntries = [];   // alle Dateien für den einen Commit
     const summary = [];       // für die Commit-Nachricht
 
+    // Schritt 0: Darf dieses Token überhaupt schreiben?
+    addLog('→ Prüfe GitHub-Token...');
+    let repoInfo;
+    try {
+      repoInfo = await ghJson(API, HEADERS);
+    } catch(e) {
+      if (e.status === 401) throw new Error('GitHub-Token ist ungültig oder abgelaufen. Bitte in den Einstellungen ein neues Token eintragen.');
+      throw e;
+    }
+    if (!repoInfo.permissions || !repoInfo.permissions.push) {
+      throw new Error(`Das GitHub-Token auf diesem Gerät hat keine Schreibrechte für ${OWNER}/${REPO}. Bitte in den Einstellungen ein Token vom Konto ${OWNER} eintragen.`);
+    }
+
     // Schritt 1: Aktuellen Stand (Commit + Baum) holen
     addLog('→ Lade aktuellen Stand der Website...');
     const ref = await ghJson(`${API}/git/ref/heads/${BRANCH}`, HEADERS);
@@ -867,7 +880,10 @@ async function startPublish() {
             method: 'POST',
             body: JSON.stringify({ content: img.base64, encoding: 'base64' })
           });
-        } catch(e) { addLog(`  ✗ ${img.name}: ${e.message}`, 'var(--red)'); }
+        } catch(e) {
+          addLog(`  ✗ ${img.name}: ${e.message}`, 'var(--red)');
+          throw new Error(`Bild „${img.titel || img.name}“ konnte nicht hochgeladen werden – nichts wurde veröffentlicht, bitte nochmal versuchen.`);
+        }
         if (blob) {
           treeEntries.push({ path: img.name, mode: '100644', type: 'blob', sha: blob.sha });
           summary.push(`Bild ${img.name}`);
@@ -889,8 +905,7 @@ async function startPublish() {
         }
         fill.style.width = (30 + (uploaded / pendingUploads.length) * 40) + '%';
       }
-      pendingUploads.length = 0;
-      addLog(`✓ ${uploaded} Bild(er) hochgeladen`);
+      addLog(`✓ ${uploaded} Bild(er) vorbereitet`);
     }
     fill.style.width = '75%';
 
@@ -1032,10 +1047,18 @@ async function startPublish() {
         if (e.status === 422) {
           throw new Error('Die Website wurde zwischenzeitlich woanders geändert. Bitte App neu laden und nochmal publizieren.');
         }
+        if (e.status === 404 || e.status === 403) {
+          throw new Error('GitHub verweigert das Speichern – das Token hat keine Schreibrechte. Bitte in den Einstellungen ein gültiges Token eintragen.');
+        }
         throw e;
       }
       addLog('✓ Alles in einem Commit gespeichert');
     }
+    // Erst jetzt ist alles sicher auf GitHub
+    if (typeof pendingUploads !== 'undefined') pendingUploads.length = 0;
+    document.querySelectorAll('#galleryGrid .gallery-meta span').forEach(sp => {
+      if (sp.textContent.includes('Neu')) sp.parentNode.innerHTML = sp.parentNode.innerHTML.replace(/<span[^>]*>● Neu<\/span> · /, '');
+    });
 
     fill.style.width = '90%';
     addLog('→ Cloudflare deployed automatisch...');
