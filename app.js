@@ -161,6 +161,11 @@ async function addNewImages() {
 const OWNER = 'steirergeorg-create';
 const REPO  = 'barbara-friehs-website';
 
+// Schutz gegen Datenverlust: Publizieren nur, wenn die Galerie von GitHub geladen wurde.
+// Gelöschte Bilder werden explizit gemerkt – alles andere aus config.json bleibt erhalten.
+let GALLERY_LOADED = false;
+const DELETED_FILES = new Set();
+
 const KNOWN_BILDER = [
   { name:'barbara-friehs-magick-oil-painting-graz.webp',                          titel:'Magick',                      technik:'oil on canvas',    jahr:'2024', groesse:'120×80 cm'  },
   { name:'barbara-friehs-fiddle-leaf-fig-oil-painting-graz.webp',                 titel:'Fiddle Leaf Fig',             technik:'oil on canvas',    jahr:'2026', groesse:'40×40 cm'   },
@@ -233,13 +238,24 @@ function convertToWebP(dataUrl) {
   return new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
+      // Auf max. 2560 px (lange Seite) verkleinern – Handyfotos sind sonst 10 MB+
+      const MAX = 2560;
+      const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth * scale);
+      const h = Math.round(img.naturalHeight * scale);
       const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      const webpDataUrl = canvas.toDataURL('image/webp', 0.82);
-      const base64 = webpDataUrl.split(',')[1];
-      resolve({ dataUrl: webpDataUrl, base64, width: img.naturalWidth, height: img.naturalHeight });
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      let outUrl = canvas.toDataURL('image/webp', 0.82);
+      let mime = 'image/webp';
+      // Safari (iPhone/iPad) kann kein WebP erzeugen und liefert stattdessen ein riesiges PNG
+      if (!outUrl.startsWith('data:image/webp')) {
+        outUrl = canvas.toDataURL('image/jpeg', 0.85);
+        mime = 'image/jpeg';
+      }
+      const base64 = outUrl.split(',')[1];
+      resolve({ dataUrl: outUrl, base64, mime, width: w, height: h });
     };
     img.src = dataUrl;
   });
@@ -254,10 +270,11 @@ async function addImageToGallery(file, info = {}) {
   const meta    = [getTechLabel(technik), jahr, groesse].filter(Boolean).join(' · ');
 
   // SEO-Dateiname generieren und in WebP konvertieren
-  const seoName = makeSeoFilename(name, technik);
-  const { dataUrl, base64, width, height } = await convertToWebP(file.dataUrl);
+  const { dataUrl, base64, mime, width, height } = await convertToWebP(file.dataUrl);
+  let seoName = makeSeoFilename(name, technik);
+  if (mime === 'image/jpeg') seoName = seoName.replace(/\.webp$/, '.jpg');
 
-  pendingUploads.push({ name: seoName, dataUrl, base64, mime: 'image/webp', titel: name, technik, jahr, groesse, width, height });
+  pendingUploads.push({ name: seoName, dataUrl, base64, mime, titel: name, technik, jahr, groesse, width, height });
 
   const item = makeGalleryItem({ name: seoName, titel: name, technik, jahr, groesse, dataUrl, isNew: true });
   const first = grid.querySelector('.gallery-item');
@@ -336,6 +353,7 @@ function makeGalleryItem(bild) {
       item.style.transition = 'opacity .25s, transform .25s';
       item.style.opacity = '0';
       item.style.transform = 'scale(.9)';
+      DELETED_FILES.add(filename);
       setTimeout(() => { item.remove(); updatePositions(); filterGallery(); updateDashboard(); }, 260);
       showToast(`"${name}" gelöscht`, 'error');
       addActivity('🗑️', 'text', `„${name}" gelöscht`, 'Galerie');
@@ -478,6 +496,7 @@ async function loadGalleryFromGitHub() { // returns implicit Promise
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       const decoded = new TextDecoder('utf-8').decode(bytes);
       const data = JSON.parse(decoded);
+      GALLERY_LOADED = true;
       if (data.bilder && data.bilder.length > 0) {
         // Galerie komplett neu aufbauen in config.json Reihenfolge
         const grid = document.getElementById('galleryGrid');
@@ -506,8 +525,17 @@ async function loadGalleryFromGitHub() { // returns implicit Promise
         const badge = document.querySelector('.nav-badge');
         if (badge) badge.textContent = data.bilder.length;
       }
+    } else {
+      throw new Error('GitHub-Antwort ' + res.status);
     }
-  } catch(e) { console.log('config.json nicht geladen:', e); }
+  } catch(e) {
+    console.log('config.json nicht geladen:', e);
+    const grid = document.getElementById('galleryGrid');
+    if (grid && !grid.querySelector('.gallery-item')) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--red);font-size:.85rem">Galerie konnte nicht geladen werden. Bitte Internetverbindung und GitHub-Token prüfen und die App neu laden. Nicht publizieren!</div>';
+    }
+    if (typeof showToast === 'function') showToast('⚠ Galerie konnte nicht geladen werden – bitte nicht publizieren', 'error');
+  }
   // Gespeichertes Titelbild markieren
   const savedFeatured = localStorage.getItem('bf_titelbild');
   if (savedFeatured) {
@@ -768,6 +796,13 @@ async function startPublish() {
   };
 
   try {
+    if (!GALLERY_LOADED) {
+      addLog('→ Galerie wird zuerst von GitHub geladen...');
+      await loadGalleryFromGitHub();
+      if (!GALLERY_LOADED) {
+        throw new Error('Galerie konnte nicht geladen werden – Publizieren abgebrochen, damit keine Bilder verloren gehen.');
+      }
+    }
     addLog('→ Verbinde mit GitHub...');
     fill.style.width = '20%';
 
@@ -786,8 +821,13 @@ async function startPublish() {
         const bytesc = new Uint8Array(binaryc.length);
         for (let i = 0; i < binaryc.length; i++) bytesc[i] = binaryc.charCodeAt(i);
         configData = JSON.parse(new TextDecoder('utf-8').decode(bytesc));
+        if (!Array.isArray(configData.bilder)) configData.bilder = [];
+      } else if (configRes.status !== 404) {
+        throw new Error('Bilderliste konnte nicht geladen werden (GitHub ' + configRes.status + ')');
       }
-    } catch(e) { addLog('  → Neue config.json wird erstellt'); }
+    } catch(e) {
+      throw new Error('Bilderliste konnte nicht geladen werden – Publizieren abgebrochen. ' + (e.message || ''));
+    }
     fill.style.width = '30%';
 
     // Schritt 2: Neue Bilder hochladen und zur config hinzufügen
@@ -888,9 +928,21 @@ async function startPublish() {
       })
       .filter(Boolean);
 
-    // Titelbild speichern
+    // Sicherheitsnetz: Nichts verlieren, was nicht ausdrücklich gelöscht wurde
+    const inDom = new Set(configData.bilder.map(b => b.bild));
+    const kept = Object.values(configLookup).filter(b => !inDom.has(b.bild) && !DELETED_FILES.has(b.bild));
+    if (kept.length) {
+      addLog(`  → ${kept.length} Bild(er) aus der bestehenden Liste beibehalten`);
+      configData.bilder.push(...kept);
+    }
+
+    // Titelbild speichern – nur wenn das Bild auch in der Galerie existiert
     const titelbildFilename = localStorage.getItem('bf_titelbild');
-    if (titelbildFilename) configData.titelbild = titelbildFilename;
+    if (titelbildFilename && configData.bilder.some(b => b.bild === titelbildFilename)) {
+      configData.titelbild = titelbildFilename;
+    } else if (titelbildFilename) {
+      localStorage.removeItem('bf_titelbild');
+    }
 
     // Änderungen anwenden
     configData.bilder.forEach(b => {
@@ -992,6 +1044,7 @@ async function startPublish() {
     btn.innerHTML = '✓ Erfolgreich publiziert!';
     btn.style.background = 'var(--green)';
     localStorage.setItem(PUBLISH_KEY, Date.now());
+    DELETED_FILES.clear();
     addActivity('🚀', 'publish', 'Website publiziert', 'barbarafriehs.at · erfolgreich');
     updateDashboard();
     showToast('🎉 Website ist live auf barbarafriehs.at!', 'success');
